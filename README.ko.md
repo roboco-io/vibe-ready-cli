@@ -8,18 +8,57 @@ Claude Agent SDK를 사용하여 LLM이 직접 리포지토리를 탐색하고, 
 
 ## 설치 및 실행
 
+### 바로 사용 (npm)
+
 ```bash
-# 현재 디렉토리 분석 (Claude Code 구독 인증 사용)
+# 설치 없이 바로 실행
 npx vibe-ready .
 
-# 특정 리포 분석
-npx vibe-ready /path/to/repo
+# 또는 전역 설치
+npm install -g vibe-ready
 
-# 상세 분석 결과 보기
-npx vibe-ready . --verbose
+# 어디서든 사용
+vibe-ready /path/to/repo
+vibe-ready . --verbose
+vibe-ready . --markdown
+vibe-ready . --pdf report.pdf
+vibe-ready . --category "하네스 엔지니어링"
 ```
 
-> **참고**: Claude Code SDK는 Claude Code 구독 인증을 그대로 사용합니다. 별도 API 키 설정이 필요 없습니다.
+> **사전 조건**: [Claude Code](https://claude.ai/code)가 설치 및 인증되어 있어야 합니다. Claude Agent SDK는 Claude Code 구독 인증을 사용하며, 별도 API 키가 필요 없습니다.
+
+### 개발자용 (소스에서 빌드)
+
+```bash
+git clone https://github.com/roboco-io/vibe-ready-cli.git
+cd vibe-ready-cli
+npm install
+npm run build
+
+# 소스에서 실행
+node dist/index.js /path/to/repo
+node dist/index.js . --verbose --markdown
+node dist/index.js . --pdf report.pdf --verbose
+
+# 테스트
+npm test
+```
+
+### CLI 옵션
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `[path]` | `.` | 분석할 리포지토리 경로 |
+| `-v, --verbose` | - | 상세 분석 결과 표시 |
+| `-m, --markdown` | - | 마크다운 형식 출력 |
+| `-c, --category <names>` | 전체 | 특정 카테고리만 분석 (쉼표 구분) |
+| `-b, --branch <branches>` | 현재 | 브랜치별 분석 및 비교 리포트 (쉼표 구분) |
+| `-o, --output <file>` | - | 리포트 파일 저장 (.md 확장자 자동 감지) |
+| `--pdf <file>` | - | PDF 내보내기 (pandoc + xelatex 필요) |
+| `--no-cache` | - | 캐시 무시, 새 분석 강제 |
+| `--max-turns <n>` | `5000` | LLM 에이전트 최대 턴 수 |
+| `--max-budget <n>` | `1.00` | 분석 1회당 최대 비용 (USD) |
+| `--timeout <n>` | `180` | 타임아웃 (초) |
 
 ## 분석 카테고리
 

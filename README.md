@@ -8,18 +8,57 @@ Using the Claude Agent SDK, an LLM directly explores the repository, scores it a
 
 ## Installation & Usage
 
+### Quick Start (via npm)
+
 ```bash
-# Analyze current directory (uses Claude Code subscription auth)
+# Run directly without installation
 npx vibe-ready .
 
-# Analyze a specific repo
-npx vibe-ready /path/to/repo
+# Or install globally
+npm install -g vibe-ready
 
-# Show detailed analysis results
-npx vibe-ready . --verbose
+# Then use anywhere
+vibe-ready /path/to/repo
+vibe-ready . --verbose
+vibe-ready . --markdown
+vibe-ready . --pdf report.pdf
+vibe-ready . --category "하네스 엔지니어링"
 ```
 
-> **Note**: The Claude Code SDK uses your Claude Code subscription authentication as-is. No separate API key setup is required.
+> **Prerequisite**: [Claude Code](https://claude.ai/code) must be installed and authenticated. The Claude Agent SDK uses your Claude Code subscription — no separate API key required.
+
+### For Developers (from source)
+
+```bash
+git clone https://github.com/roboco-io/vibe-ready-cli.git
+cd vibe-ready-cli
+npm install
+npm run build
+
+# Run from source
+node dist/index.js /path/to/repo
+node dist/index.js . --verbose --markdown
+node dist/index.js . --pdf report.pdf --verbose
+
+# Run tests
+npm test
+```
+
+### CLI Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `[path]` | `.` | Path to the repository to analyze |
+| `-v, --verbose` | - | Show detailed analysis findings |
+| `-m, --markdown` | - | Output in Markdown format |
+| `-c, --category <names>` | all | Analyze specific categories only (comma-separated) |
+| `-b, --branch <branches>` | current | Analyze specific branches (comma-separated, with comparison report) |
+| `-o, --output <file>` | - | Save report to file (.md extension auto-detected) |
+| `--pdf <file>` | - | Export report as PDF (requires pandoc + xelatex) |
+| `--no-cache` | - | Skip cache and force fresh analysis |
+| `--max-turns <n>` | `5000` | Max LLM agent turns |
+| `--max-budget <n>` | `1.00` | Max budget in USD per analysis |
+| `--timeout <n>` | `180` | Timeout in seconds |
 
 ## Analysis Categories
 
