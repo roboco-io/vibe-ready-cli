@@ -59,14 +59,26 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
    - Test directories and test files (test/, tests/, __tests__/, *.test.*, *.spec.*, *_test.*)
    - Coverage configuration (coverage settings in config files, .nycrc, coverageThreshold, etc.)
    - Test scripts in package.json, Makefile, or equivalent
-   - Scoring: 0 = no tests at all, 50 = test files exist but minimal, 80 = good test coverage setup, 100 = comprehensive with coverage thresholds
+   - Scoring:
+   - 0 = no tests at all
+   - 20 = test framework configured but no/trivial test files
+   - 40 = test files exist but minimal (few tests, no coverage config)
+   - 60 = moderate test setup (reasonable test files + test scripts)
+   - 80 = good test coverage setup (test scripts + coverage config)
+   - 100 = comprehensive with coverage thresholds enforced
 
 2. **CI/CD** (tier: "must")
    Check for:
    - Pipeline configuration files (.github/workflows/*.yml, .gitlab-ci.yml, Jenkinsfile, .circleci/, bitbucket-pipelines.yml, etc.)
    - Pipeline content quality: does it run tests? lint? build? deploy?
    - Multiple environments (dev, staging, prod)
-   - Scoring: 0 = no CI/CD, 50 = basic pipeline exists, 80 = runs tests+lint+build, 100 = comprehensive with multiple stages
+   - Scoring:
+   - 0 = no CI/CD
+   - 20 = CI config file exists but minimal (e.g., only build step)
+   - 40 = basic pipeline that runs tests
+   - 60 = pipeline runs tests + lint or build
+   - 80 = runs tests + lint + build
+   - 100 = comprehensive with multiple stages/environments
 
 3. **훅 기반 검증** (tier: "must")
    Check for:
@@ -76,7 +88,13 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
    - Commit message validation (commitlint, conventional commits)
    - AI agent hooks (.claude/settings.json or .claude/settings.local.json with PreCommit/PrePush hooks, Cursor pre-commit rules)
    - AI coding agent commit validation (e.g., Claude Code PreCommit that runs build+test before commit)
-   - Scoring: 0 = no hooks, 50 = basic lint hook or AI agent PreCommit hook only, 80 = lint+test+format hooks (traditional or AI agent), 100 = comprehensive with commit validation + AI agent hooks
+   - Scoring:
+   - 0 = no hooks
+   - 20 = hook framework configured but no meaningful checks
+   - 40 = basic single hook (lint only or AI agent PreCommit only)
+   - 60 = lint + format hooks or equivalent AI agent validation
+   - 80 = lint + test + format hooks (traditional or AI agent)
+   - 100 = comprehensive with commit validation + multiple hook types
 
 ### Nice-to-Have (권장) Categories — These improve AI coding effectiveness:
 
@@ -86,7 +104,13 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
    - Dependency management (package.json, requirements.txt, go.mod, Cargo.toml)
    - Configuration separation (config files, environment files, .env.example)
    - Monorepo structure if applicable (workspace config, lerna, turborepo, nx)
-   - Scoring: 0 = flat/chaotic, 50 = basic structure, 80 = well-organized, 100 = exemplary separation of concerns
+   - Scoring:
+   - 0 = flat/chaotic structure
+   - 20 = minimal organization (some directories but no clear pattern)
+   - 40 = basic structure (src/ exists, dependency file present)
+   - 60 = reasonable organization (clear src/test separation, config files)
+   - 80 = well-organized (clear separation of concerns, config separation)
+   - 100 = exemplary (monorepo/workspace config, .env.example, clean layering)
 
 5. **문서화 수준** (tier: "nice")
    Check for:
@@ -94,7 +118,13 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
    - CONTRIBUTING.md
    - API documentation (Swagger/OpenAPI, JSDoc, docstrings, typedoc)
    - Architecture documentation (ADR, diagrams, design docs)
-   - Scoring: 0 = no docs, 50 = basic README, 80 = good README + API docs, 100 = comprehensive docs
+   - Scoring:
+   - 0 = no documentation
+   - 20 = README exists but minimal (title/description only)
+   - 40 = basic README with setup instructions
+   - 60 = good README (setup + usage + structure sections)
+   - 80 = good README + API docs or CONTRIBUTING.md
+   - 100 = comprehensive docs (README + API + architecture + contributing)
 
 6. **하네스 엔지니어링** (tier: "nice")
    Harness Engineering = AI 에이전트가 코드베이스를 효과적으로 이해하고 안전하게 작업할 수 있도록 구성하는 것.
