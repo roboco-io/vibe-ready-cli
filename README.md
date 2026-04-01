@@ -2,6 +2,12 @@
 
 # vibe-ready
 
+[![npm version](https://img.shields.io/npm/v/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
+[![CI](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/node/v/vibe-ready.svg)](https://nodejs.org)
+[![npm downloads](https://img.shields.io/npm/dm/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
+
 A CLI tool that analyzes how ready a repository is for vibe coding (AI agent-based development).
 
 Using the Claude Agent SDK, an LLM directly explores the repository, scores it across 6 categories, and provides an overall grade along with specific improvement recommendations.

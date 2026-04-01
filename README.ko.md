@@ -2,6 +2,12 @@
 
 # vibe-ready
 
+[![npm version](https://img.shields.io/npm/v/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
+[![CI](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/node/v/vibe-ready.svg)](https://nodejs.org)
+[![npm downloads](https://img.shields.io/npm/dm/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
+
 리포지토리가 바이브 코딩(AI 에이전트 기반 개발)에 얼마나 준비되어 있는지를 분석하는 CLI 도구입니다.
 
 Claude Agent SDK를 사용하여 LLM이 직접 리포지토리를 탐색하고, 6개 카테고리를 점수화하여 종합 등급과 구체적 개선 권고를 제공합니다.
