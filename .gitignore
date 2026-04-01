@@ -1,2 +1,6 @@
 .omc/
 .omx/
+node_modules/
+dist/
+.vibe-ready/
+*.tsbuildinfo
