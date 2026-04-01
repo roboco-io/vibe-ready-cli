@@ -99,7 +99,7 @@ npm test
 
 이 프로젝트를 만들어가는 전체 과정을 바이브 코딩 튜토리얼로 정리했습니다:
 
-**[Vibe Coding Tutorial](docs/vibe-coding-tutorial/README.md)** — 4챕터, 아이디어 → 심층인터뷰 → 구현 → 하네스 엔지니어링
+**[Vibe Coding Tutorial](docs/vibe-coding-tutorial/README.md)** — 5챕터, 아이디어 → 심층인터뷰 → 구현 → 하네스 엔지니어링 → 기여 체계
 
 | 챕터 | 소요 시간 | 핵심 내용 |
 |-------|----------|----------|
@@ -107,6 +107,7 @@ npm test
 | 02. 심층 인터뷰 | ~25분 | 10라운드 Q&A, 모호도 100%→19% |
 | 03. MVP 구현 | ~40분 | Claude Agent SDK 기반 5개 모듈 |
 | 04. 하네스 엔지니어링 | ~15분 | CLAUDE.md, AGENTS.md, settings.json |
+| 05. 기여 가이드 + 스킬 | ~10분 | CONTRIBUTING.md, contribution-guard 스킬 |
 
 ## 하네스 엔지니어링 (Harness Engineering)
 

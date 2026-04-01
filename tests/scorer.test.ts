@@ -37,7 +37,7 @@ function makeLLMOutput(scores: Record<string, number>): LLMAnalysisOutput {
     "훅 기반 검증": "must",
     "리포지토리 구조": "nice",
     "문서화 수준": "nice",
-    "바이브 코딩 설정": "nice",
+    "하네스 엔지니어링": "nice",
   };
 
   return {
@@ -61,7 +61,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 80,
         "리포지토리 구조": 80,
         "문서화 수준": 80,
-        "바이브 코딩 설정": 80,
+        "하네스 엔지니어링": 80,
       }),
     );
 
@@ -78,7 +78,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 100,    // must, 0.20
         "리포지토리 구조": 0,   // nice, 0.133
         "문서화 수준": 0,       // nice, 0.133
-        "바이브 코딩 설정": 0,  // nice, 0.134
+        "하네스 엔지니어링": 0,  // nice, 0.134
       }),
     );
 
@@ -95,7 +95,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 95,
         "리포지토리 구조": 95,
         "문서화 수준": 95,
-        "바이브 코딩 설정": 95,
+        "하네스 엔지니어링": 95,
       }),
     );
 
@@ -114,7 +114,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 60,
         "리포지토리 구조": 30,  // F but nice-to-have
         "문서화 수준": 30,
-        "바이브 코딩 설정": 30,
+        "하네스 엔지니어링": 30,
       }),
     );
 
@@ -129,7 +129,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 75,
         "리포지토리 구조": 55,
         "문서화 수준": 40,
-        "바이브 코딩 설정": 10,
+        "하네스 엔지니어링": 10,
       }),
     );
 
@@ -141,7 +141,7 @@ describe("computeResult", () => {
     expect(grades["훅 기반 검증"]).toBe("C");
     expect(grades["리포지토리 구조"]).toBe("D");
     expect(grades["문서화 수준"]).toBe("F");
-    expect(grades["바이브 코딩 설정"]).toBe("F");
+    expect(grades["하네스 엔지니어링"]).toBe("F");
   });
 
   it("clamps scores to 0-100 range", () => {
@@ -152,7 +152,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 80,
         "리포지토리 구조": 80,
         "문서화 수준": 80,
-        "바이브 코딩 설정": 80,
+        "하네스 엔지니어링": 80,
       }),
     );
 
@@ -171,7 +171,7 @@ describe("computeResult", () => {
         "훅 기반 검증": 100,
         "리포지토리 구조": 100,
         "문서화 수준": 100,
-        "바이브 코딩 설정": 100,
+        "하네스 엔지니어링": 100,
       }),
     );
 

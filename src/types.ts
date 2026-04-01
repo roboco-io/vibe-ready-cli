@@ -59,8 +59,13 @@ export const CATEGORY_WEIGHTS: Record<string, { tier: CategoryTier; weight: numb
   "훅 기반 검증": { tier: "must", weight: 0.20 },
   "리포지토리 구조": { tier: "nice", weight: 0.133 },
   "문서화 수준": { tier: "nice", weight: 0.133 },
-  "바이브 코딩 설정": { tier: "nice", weight: 0.134 },
+  "하네스 엔지니어링": { tier: "nice", weight: 0.134 },
 };
+
+export interface BranchResult {
+  branch: string;
+  result: AnalysisResult;
+}
 
 export const ANALYSIS_JSON_SCHEMA = {
   type: "object" as const,

@@ -11,6 +11,7 @@ export interface AnalyzerOptions {
   maxBudgetUsd?: number;
   timeoutMs?: number;
   verbose?: boolean;
+  categories?: string[];
 }
 
 export async function analyzeRepository(
@@ -22,6 +23,7 @@ export async function analyzeRepository(
     maxBudgetUsd = DEFAULT_MAX_BUDGET_USD,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     verbose = false,
+    categories,
   } = options;
 
   if (verbose) {
@@ -32,7 +34,7 @@ export async function analyzeRepository(
   const timeout = setTimeout(() => abortController.abort(), timeoutMs);
 
   try {
-    const prompt = buildAnalysisPrompt();
+    const prompt = buildAnalysisPrompt(categories);
 
     let resultText: string | null = null;
     let structuredOutput: unknown = null;

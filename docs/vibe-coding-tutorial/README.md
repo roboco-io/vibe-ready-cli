@@ -24,6 +24,7 @@
 | [02](02-deep-interview.md) | 심층 인터뷰로 요구사항 구체화 | 10라운드 Q&A로 모호도 100% → 19%까지 감소 |
 | [03](03-implementation.md) | MVP 구현 | Claude Agent SDK 기반 분석기, 스코어러, 리포터 구현 |
 | [04](04-harness-engineering.md) | 하네스 엔지니어링 | CLAUDE.md 보강, AGENTS.md, settings.json, 훅 설정 |
+| [05](05-contribution-guide-and-skill.md) | 컨트리뷰션 가이드와 자동 검증 스킬 | CONTRIBUTING.md 작성, contribution-guard 스킬로 자동 검증 |
 
 ## 전체 타임라인
 
@@ -35,13 +36,15 @@
 05:50 — MVP 구현 시작 (CLI + 분석 엔진 + 스코어러 + 리포터)
 06:30 — 하네스 엔지니어링 시작
 06:41 — 하네스 엔지니어링 커밋 완료
+06:45 — 컨트리뷰션 가이드 + contribution-guard 스킬 생성
+06:55 — 전체 커밋 및 푸시 완료
 ```
 
 ## 총 소요 시간
 
-약 **1시간 30분** (아이디어 → 동작하는 CLI + 하네스 엔지니어링)
+약 **1시간 40분** (아이디어 → 동작하는 CLI + 하네스 엔지니어링 + 기여 체계)
 
 ---
 
-_last_generated: 2026-04-01T06:46:00Z_
+_last_generated: 2026-04-01T06:55:00Z_
 _last_log_session: ee266d92-9f23-48c9-9576-dc19f987f463_
