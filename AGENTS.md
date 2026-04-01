@@ -30,7 +30,7 @@ npm run test:watch   # vitest watch 모드
 
 실행: `npx tsx src/index.ts [path] [-v]` (개발), `node dist/index.js [path]` (빌드 후)
 
-환경변수: `ANTHROPIC_API_KEY` 필수.
+인증: Claude Code 구독 인증 사용 (별도 API 키 불필요).
 
 명령어 이름은 한번 게시되면 변경하지 않는다.
 

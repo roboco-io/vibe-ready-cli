@@ -7,10 +7,7 @@ Claude Agent SDK를 사용하여 LLM이 직접 리포지토리를 탐색하고, 
 ## 설치 및 실행
 
 ```bash
-# API 키 설정
-export ANTHROPIC_API_KEY=your-api-key
-
-# 현재 디렉토리 분석
+# 현재 디렉토리 분석 (Claude Code 구독 인증 사용)
 npx vibe-ready .
 
 # 특정 리포 분석
@@ -19,6 +16,8 @@ npx vibe-ready /path/to/repo
 # 상세 분석 결과 보기
 npx vibe-ready . --verbose
 ```
+
+> **참고**: Claude Code SDK는 Claude Code 구독 인증을 그대로 사용합니다. 별도 API 키 설정이 필요 없습니다.
 
 ## 분석 카테고리
 
@@ -95,6 +94,19 @@ npm install
 npm run build
 npm test
 ```
+
+## Tutorial
+
+이 프로젝트를 만들어가는 전체 과정을 바이브 코딩 튜토리얼로 정리했습니다:
+
+**[Vibe Coding Tutorial](docs/vibe-coding-tutorial/README.md)** — 4챕터, 아이디어 → 심층인터뷰 → 구현 → 하네스 엔지니어링
+
+| 챕터 | 소요 시간 | 핵심 내용 |
+|-------|----------|----------|
+| 01. 아이디어와 초기화 | ~10분 | ideation 문서, /init |
+| 02. 심층 인터뷰 | ~25분 | 10라운드 Q&A, 모호도 100%→19% |
+| 03. MVP 구현 | ~40분 | Claude Agent SDK 기반 5개 모듈 |
+| 04. 하네스 엔지니어링 | ~15분 | CLAUDE.md, AGENTS.md, settings.json |
 
 ## 하네스 엔지니어링 (Harness Engineering)
 

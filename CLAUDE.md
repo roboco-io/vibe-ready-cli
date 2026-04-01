@@ -36,7 +36,7 @@ node dist/index.js [path]
 npx vibe-ready [path]
 ```
 
-**환경변수**: `ANTHROPIC_API_KEY` 필수 (Claude Agent SDK 인증)
+**인증**: Claude Code 구독 인증을 그대로 사용 (별도 API 키 불필요)
 
 ## Architecture
 
