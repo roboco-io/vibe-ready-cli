@@ -1,32 +1,34 @@
-# Chapter 3: MVP 구현
+> 🇰🇷 [한국어 버전](03-implementation.ko.md)
 
-> **소요 시간**: ~40분
-> **Key Insight**: 심층 인터뷰로 요구사항이 명확해지면, 구현은 프롬프트 한 줄로 시작할 수 있다.
+# Chapter 3: MVP Implementation
+
+> **Time required**: ~40 minutes
+> **Key Insight**: Once requirements are clear from the deep interview, implementation can start with a single prompt line.
 
 ## Context
 
-Chapter 2의 심층 인터뷰를 통해 모호도를 19%까지 낮췄습니다. 이제 확정된 스펙을 기반으로 실제 코드를 작성합니다. 핵심 아키텍처 결정은 이미 내려져 있습니다:
+Through the deep interview in Chapter 2, we reduced ambiguity to 19%. Now we write actual code based on the confirmed spec. The core architectural decisions are already made:
 
-- Claude Agent SDK로 LLM 기반 분석
-- 6개 카테고리 (필수 3 + 권장 3) 가중 평균 스코어링
-- 터미널 출력 (chalk 포맷팅)
+- LLM-based analysis via Claude Agent SDK
+- Weighted average scoring across 6 categories (3 required + 3 recommended)
+- Terminal output (chalk formatting)
 - TypeScript + ESM
 
 ## The Prompt
 
-심층 인터뷰 결과가 `.omc/specs/deep-interview-vibe-ready-cli.md`에 저장되어 있으므로, 구현 요청은 간단합니다:
+Since the deep interview results are saved in `.omc/specs/deep-interview-vibe-ready-cli.md`, the implementation request is simple:
 
 ```
-심층 인터뷰 결과를 기반으로 MVP를 구현해줘
+Based on the deep interview results, implement the MVP
 ```
 
 ## What Happened
 
-AI가 심층 인터뷰 스펙을 읽고, 5개 모듈을 순서대로 생성했습니다.
+The AI read the deep interview spec and generated 5 modules in sequence.
 
-### 1. 타입 정의 (`src/types.ts`)
+### 1. Type Definitions (`src/types.ts`)
 
-가장 먼저 데이터 모델을 정의합니다. 심층 인터뷰에서 확정된 온톨로지가 그대로 타입이 됩니다:
+Data models are defined first. The ontology confirmed in the deep interview maps directly to types:
 
 ```typescript
 export type Grade = "A" | "B" | "C" | "D" | "F";
@@ -51,11 +53,11 @@ export const CATEGORY_WEIGHTS: Record<string, { tier: CategoryTier; weight: numb
 };
 ```
 
-심층 인터뷰 Round 5에서 확정된 "필수 vs 권장" 분류가 `CategoryTier`로, Round 4에서 나온 등급 시스템이 `Grade`로 직접 매핑된 것을 볼 수 있습니다.
+You can see how the "must vs. nice" classification confirmed in deep interview Round 5 maps directly to `CategoryTier`, and the grading system from Round 4 maps directly to `Grade`.
 
-### 2. LLM 프롬프트 (`src/prompts/analyze.ts`)
+### 2. LLM Prompt (`src/prompts/analyze.ts`)
 
-Claude Agent SDK에 전달할 분석 프롬프트를 작성합니다. 이 프롬프트가 LLM에게 "리포지토리 분석가" 역할을 부여합니다:
+We write the analysis prompt to pass to the Claude Agent SDK. This prompt assigns the LLM the role of "repository analyst":
 
 ```typescript
 export function buildAnalysisPrompt(): string {
@@ -76,11 +78,11 @@ for AI-assisted "vibe coding"...
 }
 ```
 
-각 카테고리마다 "무엇을 찾아야 하는지"와 "점수 기준"을 명시합니다. 이것이 LLM 기반 분석의 핵심 — 규칙을 코드로 짜는 대신, **자연어로 판단 기준을 전달**합니다.
+For each category, we specify "what to look for" and "scoring criteria." This is the core of LLM-based analysis — instead of coding rules, **judgment criteria are delivered in natural language**.
 
-### 3. 분석 엔진 (`src/analyzer.ts`)
+### 3. Analysis Engine (`src/analyzer.ts`)
 
-Claude Agent SDK의 `query()` 함수로 LLM을 호출합니다:
+The LLM is invoked using the Claude Agent SDK's `query()` function:
 
 ```typescript
 import { query } from "@anthropic-ai/claude-agent-sdk";
@@ -99,18 +101,18 @@ for await (const message of query({
     },
   },
 })) {
-  // LLM이 리포를 탐색하며 분석 수행
+  // LLM explores the repo and performs analysis
 }
 ```
 
-**핵심 포인트**:
-- `tools: ["Read", "Glob", "Grep"]` — LLM에게 파일 읽기/검색 도구만 허용
-- `permissionMode: "dontAsk"` — 사용자 확인 없이 자동 실행
-- `outputFormat: json_schema` — LLM 출력을 구조화된 JSON으로 강제
+**Key points**:
+- `tools: ["Read", "Glob", "Grep"]` — only file reading/searching tools are allowed for the LLM
+- `permissionMode: "dontAsk"` — runs automatically without user confirmation
+- `outputFormat: json_schema` — forces LLM output into structured JSON
 
-### 4. 스코어러 (`src/scorer.ts`)
+### 4. Scorer (`src/scorer.ts`)
 
-LLM의 raw 출력을 가중 평균 점수 + 등급으로 변환합니다:
+Converts the LLM's raw output into a weighted average score + grade:
 
 ```typescript
 export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
@@ -122,7 +124,7 @@ export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
   const totalScore = computeWeightedAverage(categories);
   let totalGrade = gradeFromScore(totalScore);
 
-  // 페널티: 필수 카테고리 F → 전체 등급 최대 C
+  // Penalty: required category F → overall grade capped at C
   const { penaltyApplied } = checkPenalty(categories);
   if (penaltyApplied && gradeRank(totalGrade) < gradeRank("C")) {
     totalGrade = "C";
@@ -132,31 +134,31 @@ export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
 }
 ```
 
-심층 인터뷰에서 확정된 "필수 카테고리 F → 전체 C 캡핑" 규칙이 그대로 구현되었습니다.
+The "required category F → overall grade capped at C" rule confirmed in the deep interview is implemented as-is.
 
-### 5. 리포터 (`src/reporter.ts`)
+### 5. Reporter (`src/reporter.ts`)
 
-chalk를 사용한 터미널 포맷팅:
+Terminal formatting using chalk:
 
 ```
 ═══════════════════════════════════════════════════
   🎵 Vibe Ready Score
 ═══════════════════════════════════════════════════
 
-  종합 점수: 72 / 100  등급: C
-  ⚠ 필수 카테고리 F 등급: 훅 기반 검증 → 전체 등급 최대 C로 제한
+  Overall Score: 72 / 100  Grade: C
+  ⚠ Required category graded F: Hook validation → overall grade capped at C
 
-  카테고리별 결과
+  Results by Category
   ─────────────────────────────────────────────────
-  테스트 커버리지       필수     85       B
-  CI/CD               필수     90       A
-  훅 기반 검증         필수     45       F
+  Test Coverage        Required     85       B
+  CI/CD               Required     90       A
+  Hook Validation     Required     45       F
   ...
 ```
 
-### 6. CLI 엔트리포인트 (`src/index.ts`)
+### 6. CLI Entry Point (`src/index.ts`)
 
-commander로 CLI 인터페이스를 구성합니다:
+CLI interface configured with commander:
 
 ```typescript
 program
@@ -170,11 +172,11 @@ program
 
 ## The Result
 
-빌드와 테스트를 실행합니다:
+Running build and tests:
 
 ```bash
 $ npm run build
-# TypeScript 컴파일 성공
+# TypeScript compilation successful
 
 $ npm test
 # 12 tests passed
@@ -182,43 +184,43 @@ $ npm test
  ✓ types.test.ts (4 tests)
 ```
 
-## 데이터 플로우 요약
+## Data Flow Summary
 
 ```
-사용자: vibe-ready /path/to/repo
-  → index.ts: CLI 파싱
-    → analyzer.ts: Claude SDK로 LLM 호출
-      → LLM이 Read/Glob/Grep으로 리포 탐색
-      → 6개 카테고리 분석 결과 JSON 반환
-    → scorer.ts: 가중 평균 + 등급 + 페널티 계산
-    → reporter.ts: chalk로 터미널 리포트 출력
+User: vibe-ready /path/to/repo
+  → index.ts: CLI parsing
+    → analyzer.ts: LLM invocation via Claude SDK
+      → LLM explores repo via Read/Glob/Grep
+      → Returns JSON with 6-category analysis results
+    → scorer.ts: Weighted average + grade + penalty calculation
+    → reporter.ts: Terminal report output via chalk
 ```
 
 ## Lessons Learned
 
-1. **심층 인터뷰 → 코드 매핑이 직접적이다**: 인터뷰에서 확정된 온톨로지(Entity, Category, Grade)가 거의 그대로 TypeScript 타입이 되었다. 요구사항이 명확하면 구현은 기계적이다.
+1. **Deep interview → code mapping is direct**: The ontology confirmed in the interview (Entity, Category, Grade) became TypeScript types almost as-is. When requirements are clear, implementation is mechanical.
 
-2. **LLM 프롬프트가 곧 비즈니스 로직이다**: 전통적 도구에서는 각 언어별 패턴을 규칙으로 코딩해야 하지만, LLM 기반에서는 **자연어 프롬프트가 규칙**이다. `analyze.ts`의 프롬프트 하나로 모든 언어/프레임워크를 커버한다.
+2. **LLM prompt is the business logic**: In traditional tools, you'd need to code per-language patterns as rules — in an LLM-based approach, **the natural language prompt is the rule**. A single prompt in `analyze.ts` covers all languages and frameworks.
 
-3. **JSON Schema로 LLM 출력을 강제하라**: `outputFormat: { type: "json_schema" }`를 사용하면 LLM이 지정된 스키마에 맞는 JSON을 반환한다. 파싱 실패 걱정 없이 구조화된 데이터를 받을 수 있다.
+3. **Force LLM output with JSON Schema**: Using `outputFormat: { type: "json_schema" }` makes the LLM return JSON matching the specified schema. You get structured data without worrying about parse failures.
 
-4. **순수 함수는 LLM 없이 테스트 가능하다**: `scorer.ts`의 `computeResult`, `gradeFromScore` 등은 LLM과 무관한 순수 함수라 단위 테스트가 쉽다. LLM 의존 부분과 순수 로직을 분리하는 것이 핵심.
+4. **Pure functions can be tested without LLM**: Functions like `computeResult` and `gradeFromScore` in `scorer.ts` are pure functions independent of LLM, making unit testing straightforward. Separating LLM-dependent parts from pure logic is key.
 
 ## Try It Yourself
 
 ```bash
-# 프로젝트 클론 후
+# After cloning the project
 npm install
 npm run build
 
-# 자신의 리포지토리 분석해보기
+# Analyze your own repository
 node dist/index.js /path/to/your/repo --verbose
 
-# 테스트 실행
+# Run tests
 npm test
 ```
 
 ---
 
-**이전 챕터**: [02 - 심층 인터뷰로 요구사항 구체화](02-deep-interview.md)
-**다음 챕터**: [04 - 하네스 엔지니어링](04-harness-engineering.md)
+**Previous Chapter**: [02 - Clarifying Requirements with Deep Interview](02-deep-interview.md)
+**Next Chapter**: [04 - Harness Engineering](04-harness-engineering.md)

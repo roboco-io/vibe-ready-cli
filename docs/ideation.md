@@ -1,17 +1,19 @@
-# 바이브 레디 판독기
+> 🇰🇷 [한국어 버전](ideation.ko.md)
 
-- 이 프로젝트는 리포지토리의 여러 데이터를 분석해서 바이브 코딩을 할 수 있도록 준비가 되어 있는지를 판독하는 판독기 입니다.
-- 인터페이스는 CLI로 제공됩니다.
-- 바이브 코딩을 위한 준비가 잘 되었는지는 다음과 같은 요소들을 분석해서 판독합니다.
-  - 리포지토리의 구조
-  - 테스트 커버리지
-  - 문서화 수준
+# Vibe Ready Reader
+
+- This project is a reader that analyzes various data from a repository to determine whether it is prepared for vibe coding.
+- The interface is provided as a CLI.
+- Readiness for vibe coding is determined by analyzing the following factors:
+  - Repository structure
+  - Test coverage
+  - Documentation level
   - CI/CD
-  - 훅을 통한 검증
-    - lint, ut, it, e2e, 스팩 검증
-  - 바이브 코딩을 위한 설정들
-    - 규칙 파일
-      - CLAUDE.md(or AGENTS.md)
-    - 각종 훅
-    - 스킬
-    - 에이전트
+  - Validation via hooks
+    - lint, ut, it, e2e, spec validation
+  - Configuration for vibe coding
+    - Rule files
+      - CLAUDE.md (or AGENTS.md)
+    - Various hooks
+    - Skills
+    - Agents

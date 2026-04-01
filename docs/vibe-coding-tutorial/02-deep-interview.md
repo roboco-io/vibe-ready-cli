@@ -1,135 +1,137 @@
-# Chapter 2: 심층 인터뷰로 요구사항 구체화
+> 🇰🇷 [한국어 버전](02-deep-interview.ko.md)
 
-> **소요 시간**: ~25분
-> **Key Insight**: AI에게 "만들어줘"라고 하기 전에, AI가 "무엇을 만들지" 정확히 이해할 때까지 대화하라.
+# Chapter 2: Clarifying Requirements with Deep Interview
+
+> **Time required**: ~25 minutes
+> **Key Insight**: Before telling AI to "build it," converse with it until it precisely understands "what to build."
 
 ## Context
 
-Chapter 1에서 ideation 문서를 작성했지만, 많은 것이 모호합니다: 점수는 어떻게 매기는지, 필수와 권장 항목의 차이는 무엇인지, MVP 범위는 어디까지인지. 이 모호함을 해소하기 위해 **심층 인터뷰(Deep Interview)**를 수행합니다.
+In Chapter 1 we wrote the ideation document, but much remains ambiguous: how scores are calculated, what the difference is between required and recommended items, and how far the MVP scope extends. To resolve this ambiguity, we conduct a **Deep Interview**.
 
-심층 인터뷰는 AI가 소크라테스식으로 한 번에 하나의 질문을 던져 요구사항을 구체화하는 기법입니다. 매 라운드마다 **모호도 점수**를 수학적으로 측정하고, 20% 이하로 떨어지면 구현으로 넘어갑니다.
+The deep interview is a technique where the AI asks one Socratic question at a time to crystallize requirements. After each round it mathematically measures an **ambiguity score**, and when it drops below 20%, we move on to implementation.
 
 ## The Prompt
 
 ```
-docs/ideation.md 를 읽고 PRD를 심층 인터뷰를 통해서 컨텍스트를 보강한 다음 생성해줘.
+Read docs/ideation.md, conduct a deep interview to enrich the context, then generate a PRD.
 ```
 
-한 문장 프롬프트입니다. 하지만 이 안에 세 가지가 담겨 있습니다:
-1. **입력**: ideation.md를 읽어라
-2. **방법**: 심층 인터뷰로 컨텍스트를 보강해라
-3. **출력**: PRD(Product Requirements Document)를 생성해라
+A single-sentence prompt. But it contains three things:
+1. **Input**: read ideation.md
+2. **Method**: enrich context through deep interview
+3. **Output**: generate a PRD (Product Requirements Document)
 
-## What Happened: 10라운드 인터뷰
+## What Happened: 10-Round Interview
 
-AI가 자동으로 심층 인터뷰 모드에 진입하여, 3개 차원(Goal Clarity, Constraint Clarity, Success Criteria)의 가중 점수를 추적하며 질문을 던졌습니다.
+The AI automatically entered deep interview mode, tracking weighted scores across 3 dimensions (Goal Clarity, Constraint Clarity, Success Criteria) while asking questions.
 
-### Round 1 — "누가, 언제 사용하나요?" (모호도 80%)
+### Round 1 — "Who uses it, and when?" (Ambiguity 80%)
 
 ```
-Q: 이 CLI의 주요 사용자는 누구이며, 어떤 시나리오에서 실행하게 되나요?
-   (A) 개발자 셀프 체크
-   (B) 팀 리드 일괄 평가
-   (C) CI/CD 파이프라인 게이트
-   (D) 복합 (모두 해당)
+Q: Who are the primary users of this CLI, and in what scenario would they run it?
+   (A) Developer self-check
+   (B) Team lead batch evaluation
+   (C) CI/CD pipeline gate
+   (D) Composite (all of the above)
 
-A: 복합 (모두 해당)
+A: Composite (all of the above)
 ```
 
 | Dimension | Score | Gap |
 |-----------|-------|-----|
-| Goal | 0.35 | 판정 결과가 무엇인지 불명확 |
-| Constraints | 0.10 | 기술 스택, 런타임 미정 |
-| Success Criteria | 0.10 | 수용 기준 없음 |
+| Goal | 0.35 | Unclear what the judgment output looks like |
+| Constraints | 0.10 | Tech stack, runtime undecided |
+| Success Criteria | 0.10 | No acceptance criteria |
 
-### Round 2 — "결과물 형태는?" (모호도 69%)
-
-```
-Q: 분석 결과가 사용자에게 어떻게 전달되어야 하나요?
-
-A: 복합 (점수 + 등급 + 권고)
-```
-
-점수만이 아닌 **등급 + 개선 권고**까지 포함하는 포괄적 리포트로 확정.
-
-### Round 3 — "기술 스택은?" (모호도 60%)
+### Round 2 — "What form does the output take?" (Ambiguity 69%)
 
 ```
-Q: 이 CLI를 어떤 기술 스택으로 구현하고 싶으신가요?
+Q: How should the analysis results be delivered to the user?
+
+A: Composite (score + grade + recommendations)
+```
+
+Confirmed as a comprehensive report including not just a score, but **grade + improvement recommendations**.
+
+### Round 3 — "What's the tech stack?" (Ambiguity 60%)
+
+```
+Q: What tech stack would you like to implement this CLI with?
 
 A: TypeScript + Node.js
 ```
 
-### Round 4 (Contrarian Mode) — "정말 6개 다 필요한가?" (모호도 54%)
+### Round 4 (Contrarian Mode) — "Do you really need all 6?" (Ambiguity 54%)
 
-AI가 **도발적 질문**을 던집니다:
-
-```
-Q: 6개 카테고리 중 하나만 통과해도 준비 완료라면 어떤 것이 가장 중요?
-   없어도 가능한 것은?
-
-A: 계층적 구조 — 필수/권장을 분리
-```
-
-이 질문 덕분에 **필수(must) vs 권장(nice)** 개념이 탄생했습니다.
-
-### Round 5 — "필수와 권장 분류" (모호도 49%)
+The AI poses a **provocative question**:
 
 ```
-Q: 6개 카테고리 중 필수(must-have)와 권장(nice-to-have) 분류는?
+Q: If passing just one of the 6 categories means "ready," which one matters most?
+   Which ones could be dropped?
 
-A: 검증력 우선
-   필수: 테스트, CI/CD, 훅 검증
-   권장: 리포 구조, 문서화, 바이브코딩 설정
+A: Hierarchical structure — separate required from recommended
 ```
 
-### Round 6 (Simplifier Mode) — "MVP 범위" (모호도 40%)
+This question gave birth to the **must vs. nice** concept.
+
+### Round 5 — "Classify required vs. recommended" (Ambiguity 49%)
 
 ```
-Q: MVP로 가장 단순한 버전을 먼저 만든다면, 어떤 범위까지?
+Q: Which of the 6 categories are must-have vs. nice-to-have?
 
-A: 단일 리포 + 터미널 출력
+A: Validation capability first
+   Must: Testing, CI/CD, Hook validation
+   Nice: Repo structure, Documentation, Vibe coding config
 ```
 
-JSON/HTML 출력, CI 게이트 모드, 복수 리포 일괄 점검은 모두 후속 버전으로 밀렸습니다.
-
-### Round 7 — "완성 기준" (모호도 34%)
+### Round 6 (Simplifier Mode) — "MVP scope" (Ambiguity 40%)
 
 ```
-Q: MVP가 완성되었다고 판단할 수 있는 구체적인 기준은?
+Q: If we build the simplest version first as an MVP, what scope does that cover?
 
-A: 샘플 리포 검증 — 실제 리포에 돌려서 합리적인 결과가 나오면 성공
+A: Single repo + terminal output
 ```
 
-### Round 8 — "분석 깊이" (모호도 27%)
+JSON/HTML output, CI gate mode, and batch multi-repo checking were all deferred to follow-up versions.
+
+### Round 7 — "Completion criteria" (Ambiguity 34%)
 
 ```
-Q: 각 카테고리별로 구체적으로 무엇을 찾아야 할까요? 분석 깊이는?
+Q: What are the concrete criteria for determining the MVP is complete?
 
-A: 파일 존재 + 내용 분석 (중간 깊이)
+A: Validate with sample repos — success if running against real repos produces reasonable results
 ```
 
-실행 기반 분석(테스트/린트 실제 실행)은 후속 버전으로 빠지고, 파일 파싱까지만 MVP 범위로 확정.
-
-### Round 9 — "검증용 샘플 리포" (모호도 23%)
+### Round 8 — "Analysis depth" (Ambiguity 27%)
 
 ```
-Q: MVP 검증을 위한 샘플 리포는?
+Q: What specifically should we look for in each category? What's the depth of analysis?
 
-A: nextintelligence-ai org 하위 리포를 활용
+A: File existence + content analysis (medium depth)
 ```
 
-### Round 10 — "언어별 패턴 지원?" (모호도 19% — 통과!)
+Execution-based analysis (actually running tests/lint) was deferred to a follow-up version; file parsing only was confirmed as the MVP scope.
+
+### Round 9 — "Sample repos for validation" (Ambiguity 23%)
 
 ```
-Q: 언어 agnostic인가요, 언어별 패턴을 지원하나요?
+Q: What sample repos will we use to validate the MVP?
 
-A: Claude Code SDK를 사용해서 LLM으로 분석 — 패턴 매칭이 아닌 AI 판단
+A: Use repos under the nextintelligence-ai org
 ```
 
-이 답변이 프로젝트의 핵심 아키텍처를 결정했습니다: **규칙 기반이 아닌 LLM 기반 분석**.
+### Round 10 — "Language-specific pattern support?" (Ambiguity 19% — PASSED!)
 
-## The Result: 모호도 100% → 19%
+```
+Q: Is it language agnostic, or does it support per-language patterns?
+
+A: Use Claude Code SDK to analyze via LLM — AI judgment rather than pattern matching
+```
+
+This answer determined the project's core architecture: **LLM-based analysis rather than rule-based**.
+
+## The Result: Ambiguity 100% → 19%
 
 ```
 Final Ambiguity Score: 19% (PASSED, threshold: 20%)
@@ -142,43 +144,43 @@ Final Ambiguity Score: 19% (PASSED, threshold: 20%)
 | Total Clarity    |       |        | 0.81     |
 ```
 
-10번의 질문-답변으로 다음이 확정되었습니다:
+Ten rounds of questions and answers confirmed the following:
 
-- **사용자**: 개발자 셀프 체크 (MVP)
-- **기술 스택**: TypeScript + Node.js, Claude Agent SDK
-- **분석 방식**: LLM 기반 (패턴 매칭 아님)
-- **결과물**: 점수 + 등급 + 개선 권고
-- **카테고리**: 필수 3개(테스트, CI/CD, 훅) + 권장 3개(구조, 문서, 바이브설정)
-- **스코어링**: 가중 평균, 필수 카테고리 F → 전체 등급 C 캡핑
-- **MVP 범위**: 단일 리포 + 터미널 출력만
-- **분석 깊이**: 파일 존재 + 내용 파싱
+- **Users**: Developer self-check (MVP)
+- **Tech stack**: TypeScript + Node.js, Claude Agent SDK
+- **Analysis method**: LLM-based (not pattern matching)
+- **Output**: Score + grade + improvement recommendations
+- **Categories**: 3 required (Testing, CI/CD, Hooks) + 3 recommended (Structure, Docs, Vibe config)
+- **Scoring**: Weighted average; any required category graded F → overall grade capped at C
+- **MVP scope**: Single repo + terminal output only
+- **Analysis depth**: File existence + content parsing
 
 ## Lessons Learned
 
-1. **모호함은 측정할 수 있다**: 3개 차원(Goal, Constraints, Success Criteria)의 가중 점수로 모호도를 수치화하면, "충분히 구체적인지"를 객관적으로 판단할 수 있다.
+1. **Ambiguity can be measured**: Quantifying ambiguity with weighted scores across 3 dimensions (Goal, Constraints, Success Criteria) lets you objectively judge "is this specific enough."
 
-2. **Contrarian 질문이 핵심을 찾는다**: Round 4의 도발적 질문("정말 다 필요한가?")이 필수/권장 분리라는 핵심 설계를 이끌어냈다. 편한 질문만으로는 이런 인사이트가 나오지 않는다.
+2. **Contrarian questions find the core**: The provocative question in Round 4 ("do you really need all of them?") surfaced the key design of separating required from recommended. Comfortable questions alone don't yield insights like this.
 
-3. **MVP는 적극적으로 버려야 한다**: Round 6에서 JSON 출력, CI 게이트, 복수 리포 등을 과감히 후속으로 밀었다. "다 하겠다"는 "아무것도 못 한다"와 같다.
+3. **Actively cut scope for MVP**: In Round 6, JSON output, CI gate, and multi-repo support were all boldly deferred. "Do everything" is the same as "do nothing."
 
-4. **기술적 결정도 인터뷰에서 나온다**: Round 10에서 "LLM 기반 분석"이라는 핵심 아키텍처 결정이 자연스럽게 나왔다. 기술 선택을 미리 정하지 않고, 요구사항 대화 과정에서 도출하는 것이 더 나은 결정을 만든다.
+4. **Technical decisions also emerge from the interview**: In Round 10, the core architectural decision of "LLM-based analysis" arose naturally. Letting technology choices emerge from the requirements conversation — rather than deciding them upfront — leads to better decisions.
 
 ## Try It Yourself
 
 ```bash
-# Claude Code에서 심층 인터뷰 실행
+# Run deep interview in Claude Code
 claude
 
-# 프롬프트 입력
-> docs/ideation.md 를 읽고 심층 인터뷰를 통해 요구사항을 구체화해줘
+# Enter the prompt
+> Read docs/ideation.md and clarify requirements through a deep interview
 
-# 또는 oh-my-claudecode 스킬 직접 호출
+# Or invoke the oh-my-claudecode skill directly
 > /oh-my-claudecode:deep-interview
 ```
 
-**팁**: 답변할 때 객관식 선택지에 얽매이지 마세요. "복합", "둘 다", 또는 완전히 새로운 답변을 자유롭게 제시할 수 있습니다. AI가 그에 맞게 모호도를 재계산합니다.
+**Tip**: When answering, don't feel constrained by the multiple-choice options. You can freely offer "composite," "both," or an entirely new answer. The AI will recalculate ambiguity accordingly.
 
 ---
 
-**이전 챕터**: [01 - 아이디어와 프로젝트 초기화](01-ideation-and-init.md)
-**다음 챕터**: [03 - MVP 구현](03-implementation.md)
+**Previous Chapter**: [01 - Ideation and Project Initialization](01-ideation-and-init.md)
+**Next Chapter**: [03 - MVP Implementation](03-implementation.md)

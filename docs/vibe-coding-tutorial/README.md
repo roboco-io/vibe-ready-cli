@@ -1,48 +1,50 @@
+> 🇰🇷 [한국어 버전](README.ko.md)
+
 # Vibe Coding Tutorial: vibe-ready-cli
 
-> 아이디어 한 줄에서 동작하는 CLI 도구까지 — AI 에이전트와 함께한 전체 여정
+> From a single line of an idea to a working CLI tool — the full journey with an AI agent
 
-이 튜토리얼은 `vibe-ready-cli` 프로젝트를 Claude Code로 만들어가는 실제 과정을 기록한 바이브 코딩 실습서입니다. 대화 로그에서 추출한 실제 프롬프트, 의사결정, 실패, 인사이트를 그대로 담았습니다.
+This tutorial is a hands-on vibe coding workbook documenting the actual process of building the `vibe-ready-cli` project with Claude Code. It contains real prompts, decisions, failures, and insights extracted directly from conversation logs.
 
-## 대상 독자
+## Target Audience
 
-- Claude Code를 처음 접하는 개발자
-- 바이브 코딩(AI 에이전트 기반 개발)에 관심이 있는 사람
-- 하네스 엔지니어링 개념을 실제 프로젝트에 적용하고 싶은 사람
+- Developers new to Claude Code
+- Anyone interested in vibe coding (AI agent-driven development)
+- Those who want to apply harness engineering concepts to real projects
 
-## 사전 준비
+## Prerequisites
 
 - Node.js >= 18
-- Claude Code CLI 설치 (`npm install -g @anthropic-ai/claude-code`)
-- Claude Code 구독 (Agent SDK 사용을 위해)
+- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
+- Claude Code subscription (required for Agent SDK usage)
 
-## 목차
+## Table of Contents
 
-| 챕터 | 제목 | 핵심 내용 |
-|-------|------|----------|
-| [01](01-ideation-and-init.md) | 아이디어와 프로젝트 초기화 | ideation 문서 작성, `/init`으로 CLAUDE.md 생성 |
-| [02](02-deep-interview.md) | 심층 인터뷰로 요구사항 구체화 | 10라운드 Q&A로 모호도 100% → 19%까지 감소 |
-| [03](03-implementation.md) | MVP 구현 | Claude Agent SDK 기반 분석기, 스코어러, 리포터 구현 |
-| [04](04-harness-engineering.md) | 하네스 엔지니어링 | CLAUDE.md 보강, AGENTS.md, settings.json, 훅 설정 |
-| [05](05-contribution-guide-and-skill.md) | 컨트리뷰션 가이드와 자동 검증 스킬 | CONTRIBUTING.md 작성, contribution-guard 스킬로 자동 검증 |
+| Chapter | Title | Key Content |
+|---------|-------|-------------|
+| [01](01-ideation-and-init.md) | Ideation and Project Initialization | Writing the ideation document, generating CLAUDE.md with `/init` |
+| [02](02-deep-interview.md) | Clarifying Requirements with Deep Interview | 10-round Q&A reducing ambiguity from 100% to 19% |
+| [03](03-implementation.md) | MVP Implementation | Building analyzers, scorers, and reporters using Claude Agent SDK |
+| [04](04-harness-engineering.md) | Harness Engineering | Enhancing CLAUDE.md, AGENTS.md, settings.json, hook configuration |
+| [05](05-contribution-guide-and-skill.md) | Contribution Guide and Auto-Validation Skill | Writing CONTRIBUTING.md, automated validation with the contribution-guard skill |
 
-## 전체 타임라인
+## Full Timeline
 
 ```
-05:17 — 프로젝트 시작, ideation 문서 작성
-05:25 — /init으로 CLAUDE.md 초기 생성
-05:28 — 심층 인터뷰 시작 (Round 1, 모호도 100%)
-05:49 — 심층 인터뷰 완료 (Round 10, 모호도 19%)
-05:50 — MVP 구현 시작 (CLI + 분석 엔진 + 스코어러 + 리포터)
-06:30 — 하네스 엔지니어링 시작
-06:41 — 하네스 엔지니어링 커밋 완료
-06:45 — 컨트리뷰션 가이드 + contribution-guard 스킬 생성
-06:55 — 전체 커밋 및 푸시 완료
+05:17 — Project started, ideation document written
+05:25 — CLAUDE.md initially generated with /init
+05:28 — Deep interview started (Round 1, ambiguity 100%)
+05:49 — Deep interview completed (Round 10, ambiguity 19%)
+05:50 — MVP implementation started (CLI + analysis engine + scorer + reporter)
+06:30 — Harness engineering started
+06:41 — Harness engineering committed
+06:45 — Contribution guide + contribution-guard skill created
+06:55 — Full commit and push completed
 ```
 
-## 총 소요 시간
+## Total Time Spent
 
-약 **1시간 40분** (아이디어 → 동작하는 CLI + 하네스 엔지니어링 + 기여 체계)
+Approximately **1 hour 40 minutes** (idea → working CLI + harness engineering + contribution framework)
 
 ---
 

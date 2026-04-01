@@ -1,47 +1,49 @@
-# Chapter 1: 아이디어와 프로젝트 초기화
+> 🇰🇷 [한국어 버전](01-ideation-and-init.ko.md)
 
-> **소요 시간**: ~10분
-> **Key Insight**: 바이브 코딩의 시작은 코드가 아니라 "무엇을 만들 것인가"를 명확히 적는 것이다.
+# Chapter 1: Ideation and Project Initialization
+
+> **Time required**: ~10 minutes
+> **Key Insight**: Vibe coding starts not with code, but with clearly writing down "what you're going to build."
 
 ## Context
 
-모든 바이브 코딩 프로젝트는 아이디어 문서에서 시작합니다. AI 에이전트가 코드를 생성하려면 "무엇을 만들어야 하는지"를 알아야 하고, 그 출발점이 바로 ideation 문서입니다.
+Every vibe coding project begins with an ideation document. For an AI agent to generate code, it needs to know "what to build," and that starting point is the ideation document.
 
-이 프로젝트의 아이디어는 간단했습니다: **리포지토리가 바이브 코딩에 얼마나 준비되어 있는지 분석하는 CLI 도구**를 만들자.
+The idea for this project was simple: build a **CLI tool that analyzes how ready a repository is for vibe coding**.
 
-## Step 1: Ideation 문서 작성
+## Step 1: Write the Ideation Document
 
-가장 먼저 한 일은 `docs/ideation.md`에 아이디어를 정리하는 것이었습니다. 완성된 문서가 아니라, 생각의 씨앗 수준으로 충분합니다.
+The first thing we did was organize the idea in `docs/ideation.md`. It doesn't need to be a finished document — a seed-level sketch of your thinking is enough.
 
 ```markdown
-# 바이브 레디 판독기
+# Vibe Ready Reader
 
-- 이 프로젝트는 리포지토리의 여러 데이터를 분석해서 바이브 코딩을 할 수 있도록 준비가 되어 있는지를 판독하는 판독기 입니다.
-- 인터페이스는 CLI로 제공됩니다.
-- 바이브 코딩을 위한 준비가 잘 되었는지는 다음과 같은 요소들을 분석해서 판독합니다.
-  - 리포지토리의 구조
-  - 테스트 커버리지
-  - 문서화 수준
+- This project is a reader that analyzes various data from a repository to determine whether it is prepared for vibe coding.
+- The interface is provided as a CLI.
+- Readiness for vibe coding is determined by analyzing the following elements:
+  - Repository structure
+  - Test coverage
+  - Documentation level
   - CI/CD
-  - 훅을 통한 검증
-    - lint, ut, it, e2e, 스팩 검증
-  - 바이브 코딩을 위한 설정들
-    - 규칙 파일
-      - CLAUDE.md(or AGENTS.md)
-    - 각종 훅
-    - 스킬
-    - 에이전트
+  - Validation via hooks
+    - lint, ut, it, e2e, spec validation
+  - Settings for vibe coding
+    - Rule files
+      - CLAUDE.md (or AGENTS.md)
+    - Various hooks
+    - Skills
+    - Agents
 ```
 
-18줄짜리 문서입니다. 하지만 이 안에 프로젝트의 핵심이 다 들어있습니다: **무엇을**(판독기), **어떻게**(CLI), **무엇을 분석할지**(6개 카테고리).
+An 18-line document. But it contains the entire core of the project: **what** (a reader), **how** (CLI), **what to analyze** (6 categories).
 
-### Lesson: 완벽하지 않아도 된다
+### Lesson: It Doesn't Have to Be Perfect
 
-ideation 문서는 의도적으로 불완전합니다. "점수를 어떻게 매길 것인가", "어떤 기술 스택을 쓸 것인가" 같은 질문은 아직 답하지 않았습니다. 이 모호함은 다음 챕터의 심층 인터뷰에서 해소됩니다.
+The ideation document is intentionally incomplete. Questions like "how will we score it" and "what tech stack will we use" are left unanswered. This ambiguity is resolved in the next chapter's deep interview.
 
-## Step 2: /init으로 CLAUDE.md 생성
+## Step 2: Generate CLAUDE.md with /init
 
-Git 저장소를 초기화한 뒤, Claude Code에서 `/init` 명령어를 실행합니다.
+After initializing the Git repository, run the `/init` command in Claude Code.
 
 ### The Prompt
 
@@ -49,58 +51,58 @@ Git 저장소를 초기화한 뒤, Claude Code에서 `/init` 명령어를 실행
 /init
 ```
 
-이게 전부입니다. `/init`은 Claude Code가 프로젝트를 분석하고 `CLAUDE.md` 파일을 자동으로 생성하는 빌트인 명령어입니다.
+That's all. `/init` is a built-in command that has Claude Code analyze the project and automatically generate a `CLAUDE.md` file.
 
 ### What Happened
 
-Claude Code가 프로젝트 디렉토리를 스캔하고, 존재하는 파일(`docs/ideation.md` 뿐)을 읽은 뒤 초기 `CLAUDE.md`를 생성했습니다:
+Claude Code scanned the project directory, read the existing files (only `docs/ideation.md`), and generated the initial `CLAUDE.md`:
 
 ```
-이 프로젝트는 아직 초기 단계로, docs/ideation.md 외에 코드가 없는 상태입니다.
-ideation 문서를 기반으로 CLAUDE.md를 작성하겠습니다.
+This project is still in its early stages, with no code other than docs/ideation.md.
+I will write CLAUDE.md based on the ideation document.
 ```
 
-생성된 CLAUDE.md는 최소한이었습니다 — 프로젝트 개요와 분석 항목만 나열한 수준. 하지만 이것이 **에이전트가 프로젝트를 이해하는 첫 번째 발판**이 됩니다.
+The generated CLAUDE.md was minimal — just a list of the project overview and analysis items. But this becomes **the first foothold for the agent to understand the project**.
 
 ### The Result
 
 ```
-CLAUDE.md 파일을 생성했습니다.
-프로젝트가 아직 ideation 단계라 코드, 빌드 시스템, 테스트가 없으므로,
-현재 문서에 기반한 최소한의 내용으로 작성했습니다.
+CLAUDE.md file has been created.
+Since the project is still in the ideation stage with no code, build system, or tests,
+it was written with minimal content based on the current documentation.
 ```
 
 ## Lessons Learned
 
-1. **아이디어 문서가 먼저다**: 코드보다 먼저 "무엇을 만들 것인가"를 적어라. AI 에이전트는 코드가 없어도 문서가 있으면 작업을 시작할 수 있다.
+1. **The ideation document comes first**: Write down "what you're going to build" before any code. An AI agent can start working even without code, as long as there is a document.
 
-2. **`/init`은 빈 프로젝트에서도 동작한다**: 코드가 없는 greenfield 프로젝트에서도 `/init`을 실행하면 기본 CLAUDE.md가 생성된다. 이후 프로젝트가 발전하면 이 파일을 보강해나가면 된다.
+2. **`/init` works on empty projects too**: Even for a greenfield project with no code, running `/init` will generate a basic CLAUDE.md. As the project evolves, you can flesh out this file over time.
 
-3. **불완전한 시작이 좋다**: ideation 문서의 모호함은 약점이 아니라 다음 단계(심층 인터뷰)의 입력이 된다. 처음부터 완벽할 필요 없다.
+3. **An imperfect start is good**: The ambiguity in the ideation document is not a weakness — it becomes the input for the next stage (deep interview). There's no need to be perfect from the start.
 
 ## Try It Yourself
 
 ```bash
-# 1. 새 프로젝트 디렉토리 생성
+# 1. Create a new project directory
 mkdir my-vibe-project && cd my-vibe-project
 git init
 
-# 2. ideation 문서 작성
+# 2. Write the ideation document
 mkdir docs
 cat > docs/ideation.md << 'EOF'
-# 내 프로젝트 아이디어
+# My Project Idea
 
-- [여기에 당신의 아이디어를 적으세요]
-- 인터페이스: [CLI / Web / API / ...]
-- 핵심 기능:
-  - [기능 1]
-  - [기능 2]
+- [Write your idea here]
+- Interface: [CLI / Web / API / ...]
+- Core features:
+  - [Feature 1]
+  - [Feature 2]
 EOF
 
-# 3. Claude Code에서 /init 실행
-claude  # Claude Code 실행 후 /init 입력
+# 3. Run /init in Claude Code
+claude  # Launch Claude Code, then enter /init
 ```
 
 ---
 
-**다음 챕터**: [02 - 심층 인터뷰로 요구사항 구체화](02-deep-interview.md)
+**Next Chapter**: [02 - Clarifying Requirements with Deep Interview](02-deep-interview.md)
