@@ -80,7 +80,41 @@ npm test
 |----------|--------|----------|
 | 리포지토리 구조 | 13.3% | 디렉토리 구성, 의존성 관리, 설정 분리 |
 | 문서화 수준 | 13.3% | README, CONTRIBUTING, API 문서, 아키텍처 문서 |
-| 바이브 코딩 설정 | 13.4% | CLAUDE.md, AGENTS.md, .cursor/rules, copilot-instructions 등 |
+| 하네스 엔지니어링 | 13.4% | CLAUDE.md, AGENTS.md, .claude/settings.json, 스킬, 커맨드, 다중 AI 도구 지원 |
+
+## 설정 파일
+
+리포 루트에 `.vibeready.json`을 생성하여 평가 항목을 커스터마이징할 수 있습니다:
+
+```json
+{
+  "categories": [
+    { "name": "테스트 커버리지", "tier": "must", "weight": 0.25 },
+    { "name": "CI/CD", "tier": "must", "weight": 0.25 },
+    { "name": "보안 설정", "tier": "must", "weight": 0.20,
+      "description": "리포지토리 보안 관련 설정 평가",
+      "checkpoints": [
+        ".env가 .gitignore에 포함되어 있는가",
+        "시크릿이 소스코드에 하드코딩되어 있지 않은가",
+        "의존성 취약점 스캔 설정 여부"
+      ]
+    },
+    { "name": "문서화 수준", "tier": "nice", "weight": 0.15 },
+    { "name": "하네스 엔지니어링", "tier": "nice", "weight": 0.15 }
+  ],
+  "penaltyRule": {
+    "enabled": true,
+    "maxGrade": "C",
+    "condition": "any must-have category F"
+  }
+}
+```
+
+- 기본 카테고리의 가중치/tier 변경 가능
+- `description` + `checkpoints`로 커스텀 카테고리 추가 가능
+- 가중치 합계가 1.0이 아니면 자동 정규화
+- 지원 파일명: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`
+- 전체 예시: [.vibeready.example.json](.vibeready.example.json)
 
 ## 출력 예시
 
@@ -100,7 +134,7 @@ npm test
   훅 기반 검증         필수     45       F
   리포지토리 구조       권장     80       B
   문서화 수준          권장     70       C
-  바이브 코딩 설정      권장     60       D
+  하네스 엔지니어링      권장     60       D
   ─────────────────────────────────────────────────
 
   ⚠ 필수 카테고리 F 등급: 훅 기반 검증 → 전체 등급 최대 C로 제한

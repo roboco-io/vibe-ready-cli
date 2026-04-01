@@ -80,7 +80,41 @@ npm test
 |----------|--------|-----------------|
 | Repository Structure | 13.3% | Directory organization, dependency management, configuration separation |
 | Documentation Level | 13.3% | README, CONTRIBUTING, API docs, architecture docs |
-| Vibe Coding Config | 13.4% | CLAUDE.md, AGENTS.md, .cursor/rules, copilot-instructions, etc. |
+| Harness Engineering | 13.4% | CLAUDE.md, AGENTS.md, .claude/settings.json, skills, commands, multi-AI tool support |
+
+## Configuration
+
+Create a `.vibeready.json` in your repo root to customize evaluation:
+
+```json
+{
+  "categories": [
+    { "name": "Test Coverage", "tier": "must", "weight": 0.25 },
+    { "name": "CI/CD", "tier": "must", "weight": 0.25 },
+    { "name": "Security", "tier": "must", "weight": 0.20,
+      "description": "Evaluate repository security settings",
+      "checkpoints": [
+        ".env is in .gitignore",
+        "No hardcoded secrets in source code",
+        "Dependency vulnerability scanning configured"
+      ]
+    },
+    { "name": "Documentation", "tier": "nice", "weight": 0.15 },
+    { "name": "Harness Engineering", "tier": "nice", "weight": 0.15 }
+  ],
+  "penaltyRule": {
+    "enabled": true,
+    "maxGrade": "C",
+    "condition": "any must-have category F"
+  }
+}
+```
+
+- Override default category weights and tiers
+- Add custom categories with `description` and `checkpoints`
+- Weights are auto-normalized if they don't sum to 1.0
+- Supported filenames: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`
+- See [.vibeready.example.json](.vibeready.example.json) for a full example
 
 ## Output Example
 
@@ -100,7 +134,7 @@ npm test
   Hook-based Validation  Must      45       F
   Repository Structure   Nice      80       B
   Documentation Level    Nice      70       C
-  Vibe Coding Config     Nice      60       D
+  Harness Engineering     Nice      60       D
   ─────────────────────────────────────────────────
 
   ⚠ Must-Have category F grade: Hook-based Validation → Overall grade capped at C
