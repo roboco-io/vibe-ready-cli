@@ -1,3 +1,0 @@
-{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:deep-interview"}
-{"t":0,"agent":"aecc4b3","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
-{"t":0,"agent":"aecc4b3","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":20551}
