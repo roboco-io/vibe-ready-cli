@@ -74,7 +74,9 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
    - Lint-staged or equivalent (lint-staged in package.json, .lintstagedrc)
    - Pre-commit hooks that run: linting, unit tests, type checking, formatting
    - Commit message validation (commitlint, conventional commits)
-   - Scoring: 0 = no hooks, 50 = basic lint hook, 80 = lint+test+format hooks, 100 = comprehensive with commit validation
+   - AI agent hooks (.claude/settings.json or .claude/settings.local.json with PreCommit/PrePush hooks, Cursor pre-commit rules)
+   - AI coding agent commit validation (e.g., Claude Code PreCommit that runs build+test before commit)
+   - Scoring: 0 = no hooks, 50 = basic lint hook or AI agent PreCommit hook only, 80 = lint+test+format hooks (traditional or AI agent), 100 = comprehensive with commit validation + AI agent hooks
 
 ### Nice-to-Have (권장) Categories — These improve AI coding effectiveness:
 
