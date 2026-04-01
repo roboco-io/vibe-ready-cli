@@ -62,9 +62,9 @@ npm test
 | `-o, --output <file>` | - | Save report to file (.md extension auto-detected) |
 | `--pdf <file>` | - | Export report as PDF (requires pandoc + xelatex) |
 | `--no-cache` | - | Skip cache and force fresh analysis |
-| `--max-turns <n>` | `5000` | Max LLM agent turns |
-| `--max-budget <n>` | `1.00` | Max budget in USD per analysis |
-| `--timeout <n>` | `180` | Timeout in seconds |
+| `--max-turns <n>` | `200` | Max LLM agent turns |
+| `--max-budget <n>` | `0.50` | Max budget in USD per analysis |
+| `--timeout <n>` | `120` | Timeout in seconds |
 
 ## Analysis Categories
 
@@ -157,7 +157,7 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
 |--------|---------|-------------|
 | `[path]` | `.` | Path to the repository to analyze |
 | `-v, --verbose` | - | Show detailed analysis results (rawFindings) |
-| `--max-turns <n>` | `20` | Maximum number of LLM agent turns |
+| `--max-turns <n>` | `200` | Maximum number of LLM agent turns |
 | `--max-budget <n>` | `0.50` | Maximum cost per analysis run (USD) |
 | `--timeout <n>` | `120` | Timeout (seconds) |
 

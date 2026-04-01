@@ -62,9 +62,9 @@ npm test
 | `-o, --output <file>` | - | 리포트 파일 저장 (.md 확장자 자동 감지) |
 | `--pdf <file>` | - | PDF 내보내기 (pandoc + xelatex 필요) |
 | `--no-cache` | - | 캐시 무시, 새 분석 강제 |
-| `--max-turns <n>` | `5000` | LLM 에이전트 최대 턴 수 |
-| `--max-budget <n>` | `1.00` | 분석 1회당 최대 비용 (USD) |
-| `--timeout <n>` | `180` | 타임아웃 (초) |
+| `--max-turns <n>` | `200` | LLM 에이전트 최대 턴 수 |
+| `--max-budget <n>` | `0.50` | 분석 1회당 최대 비용 (USD) |
+| `--timeout <n>` | `120` | 타임아웃 (초) |
 
 ## 분석 카테고리
 
@@ -157,7 +157,7 @@ npm test
 |------|--------|------|
 | `[path]` | `.` | 분석할 리포지토리 경로 |
 | `-v, --verbose` | - | 상세 분석 결과 (rawFindings) 표시 |
-| `--max-turns <n>` | `20` | LLM 에이전트 최대 턴 수 |
+| `--max-turns <n>` | `200` | LLM 에이전트 최대 턴 수 |
 | `--max-budget <n>` | `0.50` | 분석 1회당 최대 비용 (USD) |
 | `--timeout <n>` | `120` | 타임아웃 (초) |
 
