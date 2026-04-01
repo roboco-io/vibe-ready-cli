@@ -1,13 +1,18 @@
 import {
   type AnalysisResult,
   type CategoryResult,
+  type CategoryTier,
   type Grade,
   type LLMAnalysisOutput,
   CATEGORY_WEIGHTS,
   gradeFromScore,
 } from "./types.js";
 
-export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
+export function computeResult(
+  llmOutput: LLMAnalysisOutput,
+  customWeights?: Record<string, { tier: CategoryTier; weight: number }>,
+): AnalysisResult {
+  const weights = customWeights ?? CATEGORY_WEIGHTS;
   const categories: CategoryResult[] = llmOutput.categories.map((cat) => ({
     name: cat.name,
     tier: cat.tier,
@@ -21,7 +26,7 @@ export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
     rawFindings: cat.rawFindings,
   }));
 
-  const totalScore = computeWeightedAverage(categories);
+  const totalScore = computeWeightedAverage(categories, weights);
   let totalGrade = gradeFromScore(totalScore);
 
   const { penaltyApplied, penaltyReason } = checkPenalty(categories);
@@ -39,12 +44,15 @@ export function computeResult(llmOutput: LLMAnalysisOutput): AnalysisResult {
   };
 }
 
-function computeWeightedAverage(categories: CategoryResult[]): number {
+function computeWeightedAverage(
+  categories: CategoryResult[],
+  weights: Record<string, { tier: CategoryTier; weight: number }>,
+): number {
   let weightedSum = 0;
   let totalWeight = 0;
 
   for (const cat of categories) {
-    const config = CATEGORY_WEIGHTS[cat.name];
+    const config = weights[cat.name];
     const weight = config?.weight ?? (cat.tier === "must" ? 0.20 : 0.133);
     weightedSum += cat.score * weight;
     totalWeight += weight;

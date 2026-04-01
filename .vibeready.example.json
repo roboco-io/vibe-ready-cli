@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "name": "테스트 커버리지",
+      "tier": "must",
+      "weight": 0.20
+    },
+    {
+      "name": "CI/CD",
+      "tier": "must",
+      "weight": 0.20
+    },
+    {
+      "name": "훅 기반 검증",
+      "tier": "must",
+      "weight": 0.20
+    },
+    {
+      "name": "리포지토리 구조",
+      "tier": "nice",
+      "weight": 0.13
+    },
+    {
+      "name": "문서화 수준",
+      "tier": "nice",
+      "weight": 0.13
+    },
+    {
+      "name": "하네스 엔지니어링",
+      "tier": "nice",
+      "weight": 0.14
+    },
+    {
+      "name": "보안 설정",
+      "tier": "must",
+      "weight": 0.15,
+      "description": "리포지토리의 보안 관련 설정을 평가합니다",
+      "checkpoints": [
+        ".env 파일이 .gitignore에 포함되어 있는가",
+        "시크릿/API 키가 소스코드에 하드코딩되어 있지 않은가",
+        "의존성 취약점 스캔 설정 (dependabot, snyk 등)",
+        "CODEOWNERS 파일 존재 여부",
+        "브랜치 보호 규칙 설정 여부"
+      ]
+    }
+  ],
+  "penaltyRule": {
+    "enabled": true,
+    "maxGrade": "C",
+    "condition": "any must-have category F"
+  }
+}

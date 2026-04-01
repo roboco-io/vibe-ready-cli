@@ -17,7 +17,9 @@ import {
 } from "./reporter.js";
 import { getCachedResult, setCachedResult } from "./cache.js";
 import { ALL_CATEGORIES } from "./prompts/analyze.js";
+import { loadConfig, getEffectiveCategories, getEffectiveWeights } from "./config.js";
 import type { BranchResult } from "./types.js";
+import type { VibeReadyConfig } from "./config.js";
 
 const program = new Command();
 
@@ -53,16 +55,28 @@ program
       ? opts.branch.split(",").map((b) => b.trim())
       : undefined;
 
+    // 설정 파일 로드
+    const config = loadConfig(repoPath);
+    if (config && verbose) {
+      process.stderr.write(`설정 파일 감지: ${config.categories.length}개 카테고리\n`);
+    }
+
+    const effectiveCats = getEffectiveCategories(config);
+    const allCatNames = effectiveCats.map((c) => c.name);
+
     // 카테고리 유효성 검증
     if (categories) {
       for (const cat of categories) {
-        if (!ALL_CATEGORIES.includes(cat)) {
+        if (!allCatNames.includes(cat)) {
           console.error(`Error: 알 수 없는 카테고리: "${cat}"`);
-          console.error(`사용 가능한 카테고리: ${ALL_CATEGORIES.join(", ")}`);
+          console.error(`사용 가능한 카테고리: ${allCatNames.join(", ")}`);
           process.exit(1);
         }
       }
     }
+
+    const customCategories = config ? effectiveCats : undefined;
+    const customWeights = config ? getEffectiveWeights(config) : undefined;
 
     const analyzerOpts = {
       maxTurns: Number(opts.maxTurns),
@@ -70,13 +84,14 @@ program
       timeoutMs: Number(opts.timeout) * 1000,
       verbose,
       categories,
+      customCategories,
     };
 
     try {
       if (branches && branches.length > 0) {
-        await handleMultiBranch(repoPath, branches, analyzerOpts, useCache, opts);
+        await handleMultiBranch(repoPath, branches, analyzerOpts, useCache, opts, customWeights);
       } else {
-        await handleSingleBranch(repoPath, analyzerOpts, useCache, opts);
+        await handleSingleBranch(repoPath, analyzerOpts, useCache, opts, customWeights);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -94,9 +109,10 @@ program
 
 async function handleSingleBranch(
   repoPath: string,
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[] },
+  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[] },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
+  customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
 ) {
   const verbose = analyzerOpts.verbose;
 
@@ -111,16 +127,17 @@ async function handleSingleBranch(
     if (useCache) setCachedResult(repoPath, llmOutput);
   }
 
-  const result = computeResult(llmOutput);
+  const result = computeResult(llmOutput, customWeights);
   outputResult(result, null, repoPath, verbose, opts);
 }
 
 async function handleMultiBranch(
   repoPath: string,
   branches: string[],
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[] },
+  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[] },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
+  customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
 ) {
   const verbose = analyzerOpts.verbose;
 
@@ -160,7 +177,7 @@ async function handleMultiBranch(
 
       branchResults.push({
         branch,
-        result: computeResult(llmOutput),
+        result: computeResult(llmOutput, customWeights),
       });
     }
   } finally {

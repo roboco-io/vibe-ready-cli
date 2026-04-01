@@ -1,6 +1,7 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import { buildAnalysisPrompt } from "./prompts/analyze.js";
 import type { LLMAnalysisOutput } from "./types.js";
+import type { CategoryConfig } from "./config.js";
 
 const DEFAULT_MAX_TURNS = 5000;
 const DEFAULT_MAX_BUDGET_USD = 1.00;
@@ -12,6 +13,7 @@ export interface AnalyzerOptions {
   timeoutMs?: number;
   verbose?: boolean;
   categories?: string[];
+  customCategories?: CategoryConfig[];
 }
 
 export async function analyzeRepository(
@@ -24,6 +26,7 @@ export async function analyzeRepository(
     timeoutMs = DEFAULT_TIMEOUT_MS,
     verbose = false,
     categories,
+    customCategories,
   } = options;
 
   if (verbose) {
@@ -34,7 +37,7 @@ export async function analyzeRepository(
   const timeout = setTimeout(() => abortController.abort(), timeoutMs);
 
   try {
-    const prompt = buildAnalysisPrompt(categories);
+    const prompt = buildAnalysisPrompt(categories, customCategories);
 
     let resultText: string | null = null;
     let structuredOutput: unknown = null;

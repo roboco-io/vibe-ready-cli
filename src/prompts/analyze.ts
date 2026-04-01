@@ -7,10 +7,34 @@ export const ALL_CATEGORIES = [
   "하네스 엔지니어링",
 ];
 
-export function buildAnalysisPrompt(categories?: string[]): string {
+import type { CategoryConfig } from "../config.js";
+
+export function buildAnalysisPrompt(categories?: string[], customCategories?: CategoryConfig[]): string {
   const filterNote = categories && categories.length > 0
     ? `\n\n**IMPORTANT: Only analyze the following categories: ${categories.join(", ")}. Skip all other categories.**\n`
     : "";
+
+  const customNote = customCategories && customCategories.length > 0
+    ? buildCustomCategoriesNote(customCategories)
+    : "";
+
+function buildCustomCategoriesNote(cats: CategoryConfig[]): string {
+  const lines = ["\n\n## Custom Categories (from config file)\n\nThe following categories are defined by the project's config file. Evaluate them IN ADDITION TO or INSTEAD OF the default categories above, based on whether they replace or extend defaults.\n"];
+  for (const cat of cats) {
+    if (!ALL_CATEGORIES.includes(cat.name)) {
+      lines.push(`### ${cat.name} (tier: "${cat.tier}")`);
+      if (cat.description) lines.push(`   ${cat.description}`);
+      if (cat.checkpoints && cat.checkpoints.length > 0) {
+        lines.push("   Check for:");
+        for (const cp of cat.checkpoints) {
+          lines.push(`   - ${cp}`);
+        }
+      }
+      lines.push("");
+    }
+  }
+  return lines.length > 1 ? lines.join("\n") : "";
+}
 
   return `You are a Vibe Coding Readiness Analyst. Your job is to analyze a repository and score how ready it is for AI-assisted "vibe coding" (using AI coding agents like Claude Code, Cursor, GitHub Copilot, etc.).${filterNote}
 
@@ -133,5 +157,5 @@ After completing your analysis, output ONLY a valid JSON object (no markdown, no
   "summary": "한국어로 된 2-3문장 요약"
 }
 
-Include all 6 categories in the exact Korean names listed above. Output ONLY the JSON, nothing else.`;
+Include all categories in the exact names listed above. Output ONLY the JSON, nothing else.${customNote}`;
 }
