@@ -2,10 +2,10 @@
 
 import { Command } from "commander";
 import { resolve } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, writeFileSync } from "node:fs";
 import { analyzeRepository } from "./analyzer.js";
 import { computeResult } from "./scorer.js";
-import { printReport, printVerboseFindings, printMarkdownReport } from "./reporter.js";
+import { printReport, printVerboseFindings, printMarkdownReport, buildMarkdownReport } from "./reporter.js";
 import { getCachedResult, setCachedResult } from "./cache.js";
 
 const program = new Command();
@@ -18,6 +18,7 @@ program
   .option("-v, --verbose", "Show detailed analysis findings")
   .option("-m, --markdown", "Output in Markdown format")
   .option("--no-cache", "Skip cache and force fresh analysis")
+  .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
   .option("--max-turns <number>", "Max LLM agent turns", "20")
   .option("--max-budget <number>", "Max budget in USD per analysis", "0.50")
   .option("--timeout <number>", "Timeout in seconds", "120")
@@ -57,11 +58,19 @@ program
       }
 
       const result = computeResult(llmOutput);
-      const markdown = opts.markdown === true;
+      const outputFile = typeof opts.output === "string" ? opts.output : null;
+      const markdown = opts.markdown === true || (outputFile?.endsWith(".md") ?? false);
 
-      if (markdown) {
-        printMarkdownReport(result, verbose);
-      } else {
+      if (outputFile) {
+        const content = buildMarkdownReport(result, verbose, repoPath);
+        const outPath = resolve(outputFile);
+        writeFileSync(outPath, content, "utf-8");
+        console.log(`리포트가 ${outPath}에 저장되었습니다.`);
+      }
+
+      if (markdown && !outputFile) {
+        printMarkdownReport(result, verbose, repoPath);
+      } else if (!outputFile) {
         printReport(result);
         if (verbose) {
           printVerboseFindings(result);

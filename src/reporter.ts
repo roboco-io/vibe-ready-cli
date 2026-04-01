@@ -105,12 +105,17 @@ export function printReport(result: AnalysisResult): void {
   console.log();
 }
 
-export function printMarkdownReport(result: AnalysisResult, verbose: boolean): void {
+export function buildMarkdownReport(result: AnalysisResult, verbose: boolean, repoPath?: string): string {
   const { totalScore, totalGrade, categories, summary, penaltyApplied, penaltyReason } = result;
 
   const lines: string[] = [];
   lines.push("# 🎵 Vibe Ready Score");
   lines.push("");
+  if (repoPath) {
+    lines.push(`**대상 리포지토리**: \`${repoPath}\``);
+    lines.push(`**분석 일시**: ${new Date().toISOString().replace("T", " ").slice(0, 19)}`);
+    lines.push("");
+  }
   lines.push(`**종합 점수: ${Math.round(totalScore)} / 100  등급: ${totalGrade}**`);
 
   if (penaltyApplied && penaltyReason) {
@@ -183,7 +188,11 @@ export function printMarkdownReport(result: AnalysisResult, verbose: boolean): v
   lines.push("---");
   lines.push("*Powered by Claude Agent SDK | vibe-ready*");
 
-  console.log(lines.join("\n"));
+  return lines.join("\n");
+}
+
+export function printMarkdownReport(result: AnalysisResult, verbose: boolean, repoPath?: string): void {
+  console.log(buildMarkdownReport(result, verbose, repoPath));
 }
 
 export function printVerboseFindings(result: AnalysisResult): void {
