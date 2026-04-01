@@ -1,0 +1,19 @@
+{
+  "active": true,
+  "current_phase": "deep-interview",
+  "interview_id": "vibe-ready-cli-prd-001",
+  "type": "greenfield",
+  "initial_idea": "리포지토리의 바이브 코딩 준비도를 분석하는 CLI 판독기. 리포지토리 구조, 테스트 커버리지, 문서화 수준, CI/CD, 훅 기반 검증, 바이브 코딩 설정 등을 분석.",
+  "rounds": "[]",
+  "current_ambiguity": "1.0",
+  "threshold": "0.2",
+  "codebase_context": "null",
+  "challenge_modes_used": "[]",
+  "ontology_snapshots": "[]",
+  "_meta": {
+    "mode": "deep-interview",
+    "sessionId": null,
+    "updatedAt": "2026-04-01T05:28:17.780Z",
+    "updatedBy": "state_write_tool"
+  }
+}
