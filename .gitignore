@@ -5,3 +5,4 @@ dist/
 .vibe-ready/
 *.tsbuildinfo
 report*.md
+report*.pdf

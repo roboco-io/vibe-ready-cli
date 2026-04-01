@@ -2,10 +2,11 @@
 
 import { Command } from "commander";
 import { resolve } from "node:path";
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync, writeFileSync, unlinkSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { analyzeRepository } from "./analyzer.js";
 import { computeResult } from "./scorer.js";
-import { printReport, printVerboseFindings, printMarkdownReport, buildMarkdownReport } from "./reporter.js";
+import { printReport, printVerboseFindings, printMarkdownReport, buildMarkdownReport, buildPdfMarkdown } from "./reporter.js";
 import { getCachedResult, setCachedResult } from "./cache.js";
 
 const program = new Command();
@@ -19,6 +20,7 @@ program
   .option("-m, --markdown", "Output in Markdown format")
   .option("--no-cache", "Skip cache and force fresh analysis")
   .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
+  .option("--pdf <file>", "Export report as PDF (requires pandoc + xelatex)")
   .option("--max-turns <number>", "Max LLM agent turns", "20")
   .option("--max-budget <number>", "Max budget in USD per analysis", "0.50")
   .option("--timeout <number>", "Timeout in seconds", "120")
@@ -68,9 +70,32 @@ program
         console.log(`리포트가 ${outPath}에 저장되었습니다.`);
       }
 
-      if (markdown && !outputFile) {
+      const pdfFile = typeof opts.pdf === "string" ? opts.pdf : null;
+
+      if (pdfFile) {
+        const content = buildPdfMarkdown(result, verbose, repoPath);
+        const tmpMd = resolve(`.vibe-ready-tmp-${Date.now()}.md`);
+        const pdfPath = resolve(pdfFile);
+        try {
+          writeFileSync(tmpMd, content, "utf-8");
+          execSync(
+            `pandoc "${tmpMd}" -o "${pdfPath}" --pdf-engine=xelatex -V mainfont="Apple SD Gothic Neo" -V geometry:margin=2cm`,
+            { stdio: "pipe" },
+          );
+          console.log(`PDF 리포트가 ${pdfPath}에 저장되었습니다.`);
+        } catch (e) {
+          console.error("PDF 생성 실패. pandoc과 xelatex가 설치되어 있는지 확인하세요.");
+          console.error("설치: brew install pandoc && brew install --cask mactex");
+          if (e instanceof Error) console.error(e.message);
+          process.exit(1);
+        } finally {
+          try { unlinkSync(tmpMd); } catch {}
+        }
+      }
+
+      if (markdown && !outputFile && !pdfFile) {
         printMarkdownReport(result, verbose, repoPath);
-      } else if (!outputFile) {
+      } else if (!outputFile && !pdfFile) {
         printReport(result);
         if (verbose) {
           printVerboseFindings(result);

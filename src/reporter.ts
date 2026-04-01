@@ -195,6 +195,24 @@ export function printMarkdownReport(result: AnalysisResult, verbose: boolean, re
   console.log(buildMarkdownReport(result, verbose, repoPath));
 }
 
+const PDF_EMOJI_MAP: [RegExp, string][] = [
+  [/🎵/g, "[Vibe]"],
+  [/❌/g, "[X]"],
+  [/✅/g, "[O]"],
+  [/⚠️/g, "[!]"],
+  [/ℹ️/g, "[i]"],
+  [/⚠/g, "[!]"],
+  [/ℹ/g, "[i]"],
+];
+
+export function buildPdfMarkdown(result: AnalysisResult, verbose: boolean, repoPath?: string): string {
+  let md = buildMarkdownReport(result, verbose, repoPath);
+  for (const [pattern, replacement] of PDF_EMOJI_MAP) {
+    md = md.replace(pattern, replacement);
+  }
+  return md;
+}
+
 export function printVerboseFindings(result: AnalysisResult): void {
   console.log();
   console.log(chalk.bold("  상세 분석 결과"));
