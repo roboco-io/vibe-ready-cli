@@ -14,7 +14,7 @@
 
 ## 사전 준비
 
-- Node.js >= 18
+- Node.js >= 24
 - Claude Code CLI 설치 (`npm install -g @anthropic-ai/claude-code`)
 - Claude Code 구독 (Agent SDK 사용을 위해)
 

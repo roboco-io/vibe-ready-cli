@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Tech Stack
 
-- **Runtime**: Node.js >= 18, TypeScript (ES2022, ESM)
+- **Runtime**: Node.js >= 24, TypeScript (ES2022, ESM)
 - **Analysis Engine**: `@anthropic-ai/claude-agent-sdk` — LLM-based repo analysis
 - **CLI**: `commander` (argument parsing), `chalk` (terminal formatting)
 - **Testing**: `vitest`

@@ -12,7 +12,7 @@ npm run build
 npm test
 ```
 
-**Requirements**: Node.js >= 18
+**Requirements**: Node.js >= 24
 
 ## Development Workflow
 

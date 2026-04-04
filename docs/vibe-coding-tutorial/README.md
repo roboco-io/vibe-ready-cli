@@ -14,7 +14,7 @@ This tutorial is a hands-on vibe coding workbook documenting the actual process 
 
 ## Prerequisites
 
-- Node.js >= 18
+- Node.js >= 24
 - Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code`)
 - Claude Code subscription (required for Agent SDK usage)
 
