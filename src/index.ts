@@ -35,7 +35,7 @@ program
   .option("--no-cache", "Skip cache and force fresh analysis")
   .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
   .option("--pdf <file>", "Export report as PDF (requires pandoc + xelatex)")
-  .option("--max-turns <number>", "Max LLM agent turns", "20")
+  .option("--max-turns <number>", "Max LLM agent turns", "200")
   .option("--max-budget <number>", "Max budget in USD per analysis", "0.50")
   .option("--timeout <number>", "Timeout in seconds", "120")
   .action(async (path: string, opts: Record<string, string | boolean | undefined>) => {

@@ -3,9 +3,9 @@ import { buildAnalysisPrompt } from "./prompts/analyze.js";
 import type { LLMAnalysisOutput } from "./types.js";
 import type { CategoryConfig } from "./config.js";
 
-const DEFAULT_MAX_TURNS = 5000;
-const DEFAULT_MAX_BUDGET_USD = 1.00;
-const DEFAULT_TIMEOUT_MS = 180_000;
+export const DEFAULT_MAX_TURNS = 200;
+export const DEFAULT_MAX_BUDGET_USD = 0.50;
+export const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface AnalyzerOptions {
   maxTurns?: number;
