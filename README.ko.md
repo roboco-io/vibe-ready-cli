@@ -5,7 +5,8 @@
 [![npm version](https://img.shields.io/npm/v/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
 [![CI](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/roboco-io/vibe-ready-cli/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/node/v/vibe-ready.svg)](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D24-5FA04E?logo=node.js&logoColor=white)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![npm downloads](https://img.shields.io/npm/dm/vibe-ready.svg)](https://www.npmjs.com/package/vibe-ready)
 
 리포지토리가 바이브 코딩(AI 에이전트 기반 개발)에 얼마나 준비되어 있는지를 분석하는 CLI 도구입니다.
