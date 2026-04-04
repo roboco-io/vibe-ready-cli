@@ -1,5 +1,3 @@
-> 🇰🇷 [한국어 버전](CONTRIBUTING.ko.md)
-
 # Contributing to vibe-ready-cli
 
 Thank you for contributing to vibe-ready-cli! This document is a guide to ensure consistency and quality throughout the contribution process.

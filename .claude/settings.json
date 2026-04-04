@@ -17,12 +17,8 @@
   "hooks": {
     "PreCommit": [
       {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd /Users/dohyunjung/Workspace/roboco-io/tools/vibe-ready-cli && npm run build && npm test"
-          }
-        ]
+        "type": "command",
+        "command": "cd /Users/dohyunjung/Workspace/roboco-io/tools/vibe-ready-cli && npm run build && npm test"
       }
     ]
   }

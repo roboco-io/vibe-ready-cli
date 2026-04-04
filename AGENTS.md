@@ -1,5 +1,3 @@
-> 🇰🇷 [한국어 버전](AGENTS.ko.md)
-
 # Repository Guidelines
 
 ## Project Structure & Module Organization

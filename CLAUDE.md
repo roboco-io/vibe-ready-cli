@@ -1,5 +1,3 @@
-> 🇰🇷 [한국어 버전](CLAUDE.ko.md)
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
