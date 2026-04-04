@@ -66,7 +66,17 @@ npm test
 | `--max-budget <n>` | `0.50` | Max budget in USD per analysis |
 | `--timeout <n>` | `120` | Timeout in seconds |
 
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Data Flow Architecture" width="100%">
+</p>
+
 ## Analysis Categories
+
+<p align="center">
+  <img src="docs/categories.svg" alt="Analysis Categories" width="100%">
+</p>
 
 ### Must-Have — Verification First
 | Category | Weight | What's Analyzed |

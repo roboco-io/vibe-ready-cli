@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" fill="none">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="900" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f0f23"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="must" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="#f87171"/>
+    </linearGradient>
+    <linearGradient id="nice" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+    <filter id="s2">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="480" rx="12" fill="url(#bg2)"/>
+
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="#e2e8f0" letter-spacing="2">ANALYSIS CATEGORIES</text>
+
+  <!-- Must-Have Section -->
+  <text x="40" y="80" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#f87171" letter-spacing="1.5">MUST-HAVE</text>
+  <text x="155" y="80" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">60% of total weight</text>
+  <line x1="40" y1="90" x2="860" y2="90" stroke="#ef4444" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- Test Coverage -->
+  <g filter="url(#s2)">
+    <rect x="40" y="105" width="260" height="145" rx="10" fill="#ef4444" opacity="0.08"/>
+    <rect x="40" y="105" width="260" height="145" rx="10" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>
+    <!-- Weight badge -->
+    <rect x="240" y="115" width="48" height="20" rx="10" fill="#ef4444" opacity="0.25"/>
+    <text x="264" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#f87171">20%</text>
+    <!-- Content -->
+    <text x="60" y="132" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#fca5a5">Test Coverage</text>
+    <line x1="60" y1="143" x2="280" y2="143" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="68" cy="162" r="3" fill="#475569"/>
+    <text x="80" y="166" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Test frameworks &amp; config</text>
+    <circle cx="68" cy="182" r="3" fill="#475569"/>
+    <text x="80" y="186" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Test files &amp; coverage setup</text>
+    <circle cx="68" cy="202" r="3" fill="#475569"/>
+    <text x="80" y="206" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Test scripts in build config</text>
+    <circle cx="68" cy="222" r="3" fill="#475569"/>
+    <text x="80" y="226" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Coverage thresholds</text>
+  </g>
+
+  <!-- CI/CD -->
+  <g filter="url(#s2)">
+    <rect x="320" y="105" width="260" height="145" rx="10" fill="#ef4444" opacity="0.08"/>
+    <rect x="320" y="105" width="260" height="145" rx="10" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>
+    <rect x="520" y="115" width="48" height="20" rx="10" fill="#ef4444" opacity="0.25"/>
+    <text x="544" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#f87171">20%</text>
+    <text x="340" y="132" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#fca5a5">CI/CD</text>
+    <line x1="340" y1="143" x2="560" y2="143" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="348" cy="162" r="3" fill="#475569"/>
+    <text x="360" y="166" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Pipeline config files</text>
+    <circle cx="348" cy="182" r="3" fill="#475569"/>
+    <text x="360" y="186" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Tests, lint, build steps</text>
+    <circle cx="348" cy="202" r="3" fill="#475569"/>
+    <text x="360" y="206" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Multi-environment setup</text>
+    <circle cx="348" cy="222" r="3" fill="#475569"/>
+    <text x="360" y="226" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">GitHub Actions, GitLab CI, etc.</text>
+  </g>
+
+  <!-- Hook-based Validation -->
+  <g filter="url(#s2)">
+    <rect x="600" y="105" width="260" height="145" rx="10" fill="#ef4444" opacity="0.08"/>
+    <rect x="600" y="105" width="260" height="145" rx="10" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>
+    <rect x="800" y="115" width="48" height="20" rx="10" fill="#ef4444" opacity="0.25"/>
+    <text x="824" y="129" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#f87171">20%</text>
+    <text x="620" y="132" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#fca5a5">Hook-based Validation</text>
+    <line x1="620" y1="143" x2="840" y2="143" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="628" cy="162" r="3" fill="#475569"/>
+    <text x="640" y="166" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">husky, lefthook, pre-commit</text>
+    <circle cx="628" cy="182" r="3" fill="#475569"/>
+    <text x="640" y="186" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">lint-staged, commitlint</text>
+    <circle cx="628" cy="202" r="3" fill="#475569"/>
+    <text x="640" y="206" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">AI agent hooks (PreCommit)</text>
+    <circle cx="628" cy="222" r="3" fill="#475569"/>
+    <text x="640" y="226" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Commit message validation</text>
+  </g>
+
+  <!-- Nice-to-Have Section -->
+  <text x="40" y="290" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#60a5fa" letter-spacing="1.5">NICE-TO-HAVE</text>
+  <text x="165" y="290" font-family="system-ui, sans-serif" font-size="10" fill="#64748b">40% of total weight</text>
+  <line x1="40" y1="300" x2="860" y2="300" stroke="#3b82f6" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- Repository Structure -->
+  <g filter="url(#s2)">
+    <rect x="40" y="315" width="260" height="145" rx="10" fill="#3b82f6" opacity="0.08"/>
+    <rect x="40" y="315" width="260" height="145" rx="10" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.4"/>
+    <rect x="228" y="325" width="60" height="20" rx="10" fill="#3b82f6" opacity="0.25"/>
+    <text x="258" y="339" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#60a5fa">13.3%</text>
+    <text x="60" y="342" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#93c5fd">Repository Structure</text>
+    <line x1="60" y1="353" x2="280" y2="353" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="68" cy="372" r="3" fill="#475569"/>
+    <text x="80" y="376" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Directory organization</text>
+    <circle cx="68" cy="392" r="3" fill="#475569"/>
+    <text x="80" y="396" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Dependency management</text>
+    <circle cx="68" cy="412" r="3" fill="#475569"/>
+    <text x="80" y="416" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Configuration separation</text>
+    <circle cx="68" cy="432" r="3" fill="#475569"/>
+    <text x="80" y="436" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Monorepo structure</text>
+  </g>
+
+  <!-- Documentation Level -->
+  <g filter="url(#s2)">
+    <rect x="320" y="315" width="260" height="145" rx="10" fill="#3b82f6" opacity="0.08"/>
+    <rect x="320" y="315" width="260" height="145" rx="10" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.4"/>
+    <rect x="508" y="325" width="60" height="20" rx="10" fill="#3b82f6" opacity="0.25"/>
+    <text x="538" y="339" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#60a5fa">13.3%</text>
+    <text x="340" y="342" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#93c5fd">Documentation Level</text>
+    <line x1="340" y1="353" x2="560" y2="353" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="348" cy="372" r="3" fill="#475569"/>
+    <text x="360" y="376" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">README quality</text>
+    <circle cx="348" cy="392" r="3" fill="#475569"/>
+    <text x="360" y="396" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">CONTRIBUTING.md</text>
+    <circle cx="348" cy="412" r="3" fill="#475569"/>
+    <text x="360" y="416" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">API docs (JSDoc, OpenAPI)</text>
+    <circle cx="348" cy="432" r="3" fill="#475569"/>
+    <text x="360" y="436" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Architecture docs (ADR)</text>
+  </g>
+
+  <!-- Harness Engineering -->
+  <g filter="url(#s2)">
+    <rect x="600" y="315" width="260" height="145" rx="10" fill="#3b82f6" opacity="0.08"/>
+    <rect x="600" y="315" width="260" height="145" rx="10" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.4"/>
+    <rect x="788" y="325" width="60" height="20" rx="10" fill="#3b82f6" opacity="0.25"/>
+    <text x="818" y="339" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" font-weight="700" fill="#60a5fa">13.4%</text>
+    <text x="620" y="342" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#93c5fd">Harness Engineering</text>
+    <line x1="620" y1="353" x2="840" y2="353" stroke="#334155" stroke-width="0.5"/>
+    <circle cx="628" cy="372" r="3" fill="#475569"/>
+    <text x="640" y="376" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">CLAUDE.md, AGENTS.md</text>
+    <circle cx="628" cy="392" r="3" fill="#475569"/>
+    <text x="640" y="396" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">.claude/settings.json</text>
+    <circle cx="628" cy="412" r="3" fill="#475569"/>
+    <text x="640" y="416" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Agent skills &amp; commands</text>
+    <circle cx="628" cy="432" r="3" fill="#475569"/>
+    <text x="640" y="436" font-family="system-ui, sans-serif" font-size="10" fill="#94a3b8">Multi-AI tool support</text>
+  </g>
+
+  <!-- Penalty notice -->
+  <rect x="280" y="268" width="340" height="22" rx="6" fill="#fbbf24" opacity="0.1"/>
+  <rect x="280" y="268" width="340" height="22" rx="6" fill="none" stroke="#fbbf24" stroke-width="0.8" opacity="0.4"/>
+  <text x="300" y="283" font-family="system-ui, sans-serif" font-size="10" fill="#fbbf24">&#9888;</text>
+  <text x="316" y="283" font-family="system-ui, sans-serif" font-size="9" fill="#fbbf24">Any Must-Have category with F grade caps overall grade at C</text>
+</svg>

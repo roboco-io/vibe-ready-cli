@@ -66,7 +66,17 @@ npm test
 | `--max-budget <n>` | `0.50` | 분석 1회당 최대 비용 (USD) |
 | `--timeout <n>` | `120` | 타임아웃 (초) |
 
+## 아키텍처
+
+<p align="center">
+  <img src="docs/architecture.svg" alt="Data Flow Architecture" width="100%">
+</p>
+
 ## 분석 카테고리
+
+<p align="center">
+  <img src="docs/categories.svg" alt="Analysis Categories" width="100%">
+</p>
 
 ### 필수 (Must-Have) — 검증력 우선
 | 카테고리 | 가중치 | 분석 대상 |
