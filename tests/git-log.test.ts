@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { computeGitLogStats } from "../src/git-log.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { computeGitLogStats, collectGitLogContext } from "../src/git-log.js";
 
 describe("computeGitLogStats", () => {
   it("GitHub 이슈 참조(#N, GH-N)를 카운트한다", () => {
@@ -53,5 +56,25 @@ describe("computeGitLogStats", () => {
     expect(stats.totalCommits).toBe(0);
     expect(stats.issueRefRate).toBe(0);
     expect(stats.prWorkflowDetected).toBe(false);
+  });
+});
+
+describe("collectGitLogContext", () => {
+  it("git 리포지토리가 아니면 null을 반환한다", () => {
+    const dir = mkdtempSync(join(tmpdir(), "vibe-ready-test-"));
+    try {
+      expect(collectGitLogContext(dir)).toBeNull();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("git 리포지토리에서 통계와 샘플을 반환한다", () => {
+    // 이 프로젝트 자체가 git 리포지토리이므로 그대로 사용
+    const ctx = collectGitLogContext(process.cwd());
+    expect(ctx).not.toBeNull();
+    expect(ctx!.totalCommits).toBeGreaterThan(0);
+    expect(ctx!.sampleSubjects.length).toBeGreaterThan(0);
+    expect(ctx!.sampleSubjects.length).toBeLessThanOrEqual(50);
   });
 });

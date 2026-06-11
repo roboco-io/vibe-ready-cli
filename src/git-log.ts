@@ -52,3 +52,41 @@ export function computeGitLogStats(subjects: string[]): GitLogStats {
     prWorkflowDetected: mergeCommitCount > 0 || squashCount > 0,
   };
 }
+
+const MAX_COMMITS = 200;
+const MAX_SAMPLES = 50;
+
+// 환경에 GIT_DIR / GIT_WORK_TREE 가 설정된 경우 cwd 의 .git 을 사용하도록 제거
+function cleanGitEnv(): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  delete env["GIT_DIR"];
+  delete env["GIT_WORK_TREE"];
+  delete env["GIT_INDEX_FILE"];
+  return env;
+}
+
+export function collectGitLogContext(repoPath: string, verbose = false): GitLogContext | null {
+  let output: string;
+  try {
+    output = execFileSync("git", ["log", `-${MAX_COMMITS}`, "--pretty=%s"], {
+      cwd: repoPath,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+      env: cleanGitEnv(),
+    });
+  } catch (e) {
+    if (verbose) {
+      const reason = e instanceof Error ? e.message : String(e);
+      process.stderr.write(`[git-log] 커밋 히스토리를 수집할 수 없습니다: ${reason}\n`);
+    }
+    return null;
+  }
+
+  const subjects = output.split("\n").filter((s) => s.trim().length > 0);
+  if (subjects.length === 0) return null;
+
+  return {
+    ...computeGitLogStats(subjects),
+    sampleSubjects: subjects.slice(0, MAX_SAMPLES),
+  };
+}
