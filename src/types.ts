@@ -57,9 +57,10 @@ export const CATEGORY_WEIGHTS: Record<string, { tier: CategoryTier; weight: numb
   "테스트 커버리지": { tier: "must", weight: 0.20 },
   "CI/CD": { tier: "must", weight: 0.20 },
   "훅 기반 검증": { tier: "must", weight: 0.20 },
-  "리포지토리 구조": { tier: "nice", weight: 0.133 },
-  "문서화 수준": { tier: "nice", weight: 0.133 },
-  "하네스 엔지니어링": { tier: "nice", weight: 0.134 },
+  "리포지토리 구조": { tier: "nice", weight: 0.10 },
+  "문서화 수준": { tier: "nice", weight: 0.10 },
+  "하네스 엔지니어링": { tier: "nice", weight: 0.10 },
+  "이슈 트래킹 연동": { tier: "nice", weight: 0.10 },
 };
 
 export interface BranchResult {

@@ -53,7 +53,7 @@ function computeWeightedAverage(
 
   for (const cat of categories) {
     const config = weights[cat.name];
-    const weight = config?.weight ?? (cat.tier === "must" ? 0.20 : 0.133);
+    const weight = config?.weight ?? (cat.tier === "must" ? 0.20 : 0.10);
     weightedSum += cat.score * weight;
     totalWeight += weight;
   }
