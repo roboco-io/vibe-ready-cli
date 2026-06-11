@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**vibe-ready-cli** is a CLI tool that analyzes how ready a repository is for vibe coding (AI agent-based development). It uses the Claude Agent SDK to analyze repositories via LLM, outputting a score (0–100) and grade (A–F) per 6 categories, along with improvement recommendations, to the terminal.
+**vibe-ready-cli** is a CLI tool that analyzes how ready a repository is for vibe coding (AI agent-based development). It uses the Claude Agent SDK to analyze repositories via LLM, outputting a score (0–100) and grade (A–F) per 7 categories, along with improvement recommendations, to the terminal.
 
 ## Tech Stack
 
@@ -44,6 +44,7 @@ npx vibe-ready [path]
 src/
   index.ts           # CLI entrypoint (commander-based)
   analyzer.ts        # Repo analysis via Claude Agent SDK (query → LLM call)
+  git-log.ts         # 커밋 로그 수집 + 이슈 참조 통계, LLM 호출 전 사전 추출
   scorer.ts          # LLM output → weighted average score + grade + penalty calculation
   reporter.ts        # Terminal report output (chalk formatting)
   types.ts           # Type definitions, scoring model, JSON schema
@@ -54,21 +55,23 @@ src/
 ### Data Flow
 
 ```
-CLI args → index.ts → analyzer.ts (Claude SDK query) → LLMAnalysisOutput
+CLI args → index.ts → git-log.ts (커밋 로그 사전 추출)
+  → analyzer.ts (Claude SDK query + Git Log Context 주입) → LLMAnalysisOutput
   → scorer.ts (computeResult) → AnalysisResult
   → reporter.ts (printReport) → terminal output
 ```
 
-### Analysis Categories (6)
+### Analysis Categories (7)
 
 | Category | Tier | Weight |
 |----------|------|--------|
 | Test Coverage | must | 0.20 |
 | CI/CD | must | 0.20 |
 | Hook-based Validation | must | 0.20 |
-| Repository Structure | nice | 0.133 |
-| Documentation Level | nice | 0.133 |
-| Vibe Coding Config | nice | 0.134 |
+| Repository Structure | nice | 0.10 |
+| Documentation Level | nice | 0.10 |
+| Vibe Coding Config | nice | 0.10 |
+| Issue Tracking Integration | nice | 0.10 |
 
 ### Scoring Rules
 
