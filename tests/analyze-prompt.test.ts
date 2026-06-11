@@ -113,5 +113,12 @@ describe("buildAnalysisPrompt", () => {
         expect(section).toContain(tier);
       }
     });
+
+    it("이슈 트래킹 연동 should have 6 scoring tiers", () => {
+      const section = prompt.split("**이슈 트래킹 연동**")[1].split("## Output Requirements")[0];
+      for (const tier of scoreTiers) {
+        expect(section).toContain(tier);
+      }
+    });
   });
 });

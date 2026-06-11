@@ -26,24 +26,6 @@ export function buildAnalysisPrompt(
 
   const gitLogNote = buildGitLogNote(gitLogContext ?? null);
 
-function buildCustomCategoriesNote(cats: CategoryConfig[]): string {
-  const lines = ["\n\n## Custom Categories (from config file)\n\nThe following categories are defined by the project's config file. Evaluate them IN ADDITION TO or INSTEAD OF the default categories above, based on whether they replace or extend defaults.\n"];
-  for (const cat of cats) {
-    if (!ALL_CATEGORIES.includes(cat.name)) {
-      lines.push(`### ${cat.name} (tier: "${cat.tier}")`);
-      if (cat.description) lines.push(`   ${cat.description}`);
-      if (cat.checkpoints && cat.checkpoints.length > 0) {
-        lines.push("   Check for:");
-        for (const cp of cat.checkpoints) {
-          lines.push(`   - ${cp}`);
-        }
-      }
-      lines.push("");
-    }
-  }
-  return lines.length > 1 ? lines.join("\n") : "";
-}
-
   return `You are a Vibe Coding Readiness Analyst. Your job is to analyze a repository and score how ready it is for AI-assisted "vibe coding" (using AI coding agents like Claude Code, Cursor, GitHub Copilot, etc.).${filterNote}
 
 ## Instructions
@@ -180,8 +162,7 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - 40 = 커밋 이슈 참조율 낮음(<30%) 또는 PR 워크플로만 존재
    - 60 = 참조율 보통(30~60%) + PR 워크플로
    - 80 = 참조율 높음(60% 이상) + PR 워크플로 + 템플릿
-   - 100 = 참조율 높음 + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)
-
+   - 100 = 참조율 높음 + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)${gitLogNote}
 ## Output Requirements
 
 For each category, provide:
@@ -212,7 +193,25 @@ After completing your analysis, output ONLY a valid JSON object (no markdown, no
   "summary": "한국어로 된 2-3문장 요약"
 }
 
-Include all categories in the exact names listed above. Output ONLY the JSON, nothing else.${gitLogNote}${customNote}`;
+Include all categories in the exact names listed above. Output ONLY the JSON, nothing else.${customNote}`;
+}
+
+function buildCustomCategoriesNote(cats: CategoryConfig[]): string {
+  const lines = ["\n\n## Custom Categories (from config file)\n\nThe following categories are defined by the project's config file. Evaluate them IN ADDITION TO or INSTEAD OF the default categories above, based on whether they replace or extend defaults.\n"];
+  for (const cat of cats) {
+    if (!ALL_CATEGORIES.includes(cat.name)) {
+      lines.push(`### ${cat.name} (tier: "${cat.tier}")`);
+      if (cat.description) lines.push(`   ${cat.description}`);
+      if (cat.checkpoints && cat.checkpoints.length > 0) {
+        lines.push("   Check for:");
+        for (const cp of cat.checkpoints) {
+          lines.push(`   - ${cp}`);
+        }
+      }
+      lines.push("");
+    }
+  }
+  return lines.length > 1 ? lines.join("\n") : "";
 }
 
 function buildGitLogNote(ctx: GitLogContext | null): string {
@@ -229,6 +228,6 @@ function buildGitLogNote(ctx: GitLogContext | null): string {
 
 최근 커밋 제목 샘플 (최대 50개) — 위 통계가 놓친 비표준 트래커(Linear, Asana 등) 참조 패턴이 보이면 평가에 보정 반영하세요:
 
-${ctx.sampleSubjects.map((s) => `- ${s}`).join("\n")}
+${ctx.sampleSubjects.map((s) => `- ${s.replace(/[\r\n]+/g, " ")}`).join("\n")}
 `;
 }

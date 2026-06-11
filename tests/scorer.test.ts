@@ -38,6 +38,7 @@ function makeLLMOutput(scores: Record<string, number>): LLMAnalysisOutput {
     "리포지토리 구조": "nice",
     "문서화 수준": "nice",
     "하네스 엔지니어링": "nice",
+    "이슈 트래킹 연동": "nice",
   };
 
   return {
