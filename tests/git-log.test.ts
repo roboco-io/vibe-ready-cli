@@ -51,6 +51,16 @@ describe("computeGitLogStats", () => {
     expect(none.prWorkflowDetected).toBe(false);
   });
 
+  it("단어에 붙은 #N과 단일 문자 프리픽스 Jira 패턴은 제외한다", () => {
+    const stats = computeGitLogStats([
+      "refactor: rename foo#12bar helper",
+      "fix: A-1 edge case",
+    ]);
+    expect(stats.refBreakdown.github).toBe(0);
+    expect(stats.refBreakdown.jira).toBe(0);
+    expect(stats.issueRefRate).toBe(0);
+  });
+
   it("빈 배열은 0 통계를 반환한다", () => {
     const stats = computeGitLogStats([]);
     expect(stats.totalCommits).toBe(0);

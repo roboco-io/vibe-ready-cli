@@ -16,8 +16,8 @@ export interface GitLogContext extends GitLogStats {
   sampleSubjects: string[]; // 최근 커밋 제목 원문 (최대 50개)
 }
 
-const GITHUB_REF = /(?:#\d+|\bGH-\d+\b)/;
-const JIRA_REF = /\b(?!GH-\d)[A-Z][A-Z0-9]+-\d+\b/;
+const GITHUB_REF = /(?:(?<!\w)#\d+\b|\bGH-\d+\b)/;
+const JIRA_REF = /\b(?!GH-\d)[A-Z]{2,10}-\d{1,6}\b/;
 const CLOSE_KEYWORD = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b/i;
 const MERGE_COMMIT = /^Merge (?:pull request #\d+|branch )/;
 const SQUASH_SUFFIX = /\(#\d+\)\s*$/;
