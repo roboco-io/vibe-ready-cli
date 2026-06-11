@@ -196,4 +196,10 @@ describe("CATEGORY_WEIGHTS", () => {
     expect(musts).toHaveLength(3);
     for (const m of musts) expect(m.weight).toBe(0.20);
   });
+
+  it("nice 카테고리는 4개이고 각 0.10이다", () => {
+    const nices = Object.values(CATEGORY_WEIGHTS).filter((w) => w.tier === "nice");
+    expect(nices).toHaveLength(4);
+    for (const n of nices) expect(n.weight).toBe(0.10);
+  });
 });

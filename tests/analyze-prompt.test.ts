@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { buildAnalysisPrompt } from "../src/prompts/analyze.js";
+import { buildAnalysisPrompt, ALL_CATEGORIES } from "../src/prompts/analyze.js";
+import { CATEGORY_WEIGHTS } from "../src/types.js";
+import type { GitLogContext } from "../src/git-log.js";
 
 describe("buildAnalysisPrompt", () => {
   const prompt = buildAnalysisPrompt();
@@ -27,6 +29,43 @@ describe("buildAnalysisPrompt", () => {
     it("should still reference PreCommit in harness engineering section", () => {
       const harnessSection = prompt.split("하네스 엔지니어링")[1];
       expect(harnessSection).toContain("PreCommit");
+    });
+  });
+
+  describe("git log context", () => {
+    const sampleContext: GitLogContext = {
+      totalCommits: 100,
+      issueRefRate: 45,
+      refBreakdown: { github: 30, jira: 15, keywords: 10 },
+      mergeCommitCount: 12,
+      prWorkflowDetected: true,
+      sampleSubjects: ["feat: add login (#12)", "PROJ-3 fix crash"],
+    };
+
+    it("gitLogContext가 있으면 통계와 샘플을 프롬프트에 포함한다", () => {
+      const prompt = buildAnalysisPrompt(undefined, undefined, sampleContext);
+      expect(prompt).toContain("Git Log Context");
+      expect(prompt).toContain("45%");
+      expect(prompt).toContain("feat: add login (#12)");
+    });
+
+    it("gitLogContext가 null이면 폴백 안내를 포함한다", () => {
+      const prompt = buildAnalysisPrompt(undefined, undefined, null);
+      expect(prompt).toContain("커밋 히스토리를 확인할 수 없");
+    });
+
+    it("이슈 트래킹 연동 카테고리가 ALL_CATEGORIES와 프롬프트에 포함된다", () => {
+      expect(ALL_CATEGORIES).toContain("이슈 트래킹 연동");
+      const prompt = buildAnalysisPrompt();
+      expect(prompt).toContain("이슈 트래킹 연동");
+      expect(prompt).toContain("7 categories");
+    });
+
+    it("CATEGORY_WEIGHTS의 모든 카테고리가 프롬프트에 등장한다 (드리프트 방지)", () => {
+      const prompt = buildAnalysisPrompt();
+      for (const name of Object.keys(CATEGORY_WEIGHTS)) {
+        expect(prompt).toContain(name);
+      }
     });
   });
 
