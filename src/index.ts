@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { existsSync, writeFileSync, unlinkSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { analyzeRepository } from "./analyzer.js";
+import { collectGitLogContext } from "./git-log.js";
 import { computeResult } from "./scorer.js";
 import {
   printReport,
@@ -123,7 +124,8 @@ async function handleSingleBranch(
   if (llmOutput) {
     if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
   } else {
-    llmOutput = await analyzeRepository(repoPath, analyzerOpts);
+    const gitLogContext = collectGitLogContext(repoPath, verbose);
+    llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
     if (useCache) setCachedResult(repoPath, llmOutput);
   }
 
@@ -171,7 +173,8 @@ async function handleMultiBranch(
       if (llmOutput) {
         if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
       } else {
-        llmOutput = await analyzeRepository(repoPath, analyzerOpts);
+        const gitLogContext = collectGitLogContext(repoPath, verbose);
+        llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
         if (useCache) setCachedResult(repoPath, llmOutput);
       }
 
