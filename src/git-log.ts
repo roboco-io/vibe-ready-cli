@@ -77,7 +77,7 @@ export function collectGitLogContext(repoPath: string, verbose = false): GitLogC
   } catch (e) {
     if (verbose) {
       const reason = e instanceof Error ? e.message : String(e);
-      process.stderr.write(`[git-log] 커밋 히스토리를 수집할 수 없습니다: ${reason}\n`);
+      process.stderr.write(`\n[git-log] 커밋 히스토리를 수집할 수 없습니다: ${reason}\n`);
     }
     return null;
   }
