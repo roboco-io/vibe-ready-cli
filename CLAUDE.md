@@ -70,7 +70,7 @@ CLI args → index.ts → git-log.ts (커밋 로그 사전 추출)
 | Hook-based Validation | must | 0.20 |
 | Repository Structure | nice | 0.10 |
 | Documentation Level | nice | 0.10 |
-| Vibe Coding Config | nice | 0.10 |
+| Harness Engineering | nice | 0.10 |
 | Issue Tracking Integration | nice | 0.10 |
 
 ### Scoring Rules
@@ -105,4 +105,4 @@ CLI args → index.ts → git-log.ts (커밋 로그 사전 추출)
 
 ## Status
 
-MVP implementation complete. CLI + analysis engine + scorer + reporter + unit tests (12/12 pass). Build successful.
+MVP implementation complete. CLI + analysis engine + scorer + reporter + unit tests (vitest, all passing). Build successful.

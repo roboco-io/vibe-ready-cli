@@ -147,6 +147,7 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
   Repository Structure   Nice      80       B
   Documentation Level    Nice      70       C
   Harness Engineering     Nice      60       D
+  Issue Tracking Integration Nice   75       C
   ─────────────────────────────────────────────────
 
   ⚠ Must-Have category F grade: Hook-based Validation → Overall grade capped at C
