@@ -6,6 +6,8 @@ import type { LLMAnalysisOutput } from "./types.js";
 const CACHE_DIR = ".vibe-ready";
 const CACHE_FILE = "cache.json";
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24시간
+// 카테고리 스키마가 바뀌면 버전을 올려 이전 캐시를 무효화한다 (v2: 이슈 트래킹 연동 카테고리 추가)
+export const CACHE_STORE_VERSION = 2;
 
 interface CacheEntry {
   repoPath: string;
@@ -15,7 +17,7 @@ interface CacheEntry {
 }
 
 interface CacheStore {
-  version: 1;
+  version: number;
   entries: Record<string, CacheEntry>;
 }
 
@@ -48,13 +50,22 @@ function computeRepoHash(repoPath: string): string {
   return hash.digest("hex").slice(0, 16);
 }
 
+function emptyStore(): CacheStore {
+  return { version: CACHE_STORE_VERSION, entries: {} };
+}
+
 function loadCache(repoPath: string): CacheStore {
   const cachePath = getCachePath(repoPath);
   try {
     const data = readFileSync(cachePath, "utf-8");
-    return JSON.parse(data) as CacheStore;
+    const store = JSON.parse(data) as CacheStore;
+    // 버전 불일치(구버전 카테고리 스키마) 캐시는 무시한다
+    if (store.version !== CACHE_STORE_VERSION || typeof store.entries !== "object" || store.entries === null) {
+      return emptyStore();
+    }
+    return store;
   } catch {
-    return { version: 1, entries: {} };
+    return emptyStore();
   }
 }
 

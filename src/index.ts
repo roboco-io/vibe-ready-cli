@@ -3,8 +3,9 @@
 import { Command } from "commander";
 import { resolve } from "node:path";
 import { existsSync, writeFileSync, unlinkSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { analyzeRepository } from "./analyzer.js";
+import { collectGitLogContext } from "./git-log.js";
 import { computeResult } from "./scorer.js";
 import {
   printReport,
@@ -123,7 +124,8 @@ async function handleSingleBranch(
   if (llmOutput) {
     if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
   } else {
-    llmOutput = await analyzeRepository(repoPath, analyzerOpts);
+    const gitLogContext = collectGitLogContext(repoPath, verbose);
+    llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
     if (useCache) setCachedResult(repoPath, llmOutput);
   }
 
@@ -158,7 +160,7 @@ async function handleMultiBranch(
 
       // 브랜치 전환
       try {
-        execSync(`git checkout ${branch}`, { cwd: repoPath, stdio: "pipe" });
+        execFileSync("git", ["checkout", branch], { cwd: repoPath, stdio: "pipe" });
       } catch {
         console.error(`Error: 브랜치 "${branch}"로 전환할 수 없습니다.`);
         continue;
@@ -171,7 +173,8 @@ async function handleMultiBranch(
       if (llmOutput) {
         if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
       } else {
-        llmOutput = await analyzeRepository(repoPath, analyzerOpts);
+        const gitLogContext = collectGitLogContext(repoPath, verbose);
+        llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
         if (useCache) setCachedResult(repoPath, llmOutput);
       }
 
@@ -183,7 +186,7 @@ async function handleMultiBranch(
   } finally {
     // 원래 브랜치로 복원
     try {
-      execSync(`git checkout ${originalBranch}`, { cwd: repoPath, stdio: "pipe" });
+      execFileSync("git", ["checkout", originalBranch], { cwd: repoPath, stdio: "pipe" });
     } catch {
       console.error(`Warning: 원래 브랜치(${originalBranch})로 복원하지 못했습니다.`);
     }
