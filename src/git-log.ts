@@ -17,7 +17,21 @@ export interface GitLogContext extends GitLogStats {
 }
 
 const GITHUB_REF = /(?:(?<!\w)#\d+\b|\bGH-\d+\b)/;
-const JIRA_REF = /\b(?!GH-\d)[A-Z]{2,10}-\d{1,6}\b/;
+// 앞에 영숫자가 없는 "PREFIX-숫자" 형태를 Jira 이슈 키 후보로 본다.
+const JIRA_REF = /(?<![A-Za-z0-9])([A-Z]{2,10})-\d{1,6}\b/g;
+// 이슈 키가 아니라 표준/스펙/인코딩/암호 토큰인 흔한 약어 — 오탐 방지 (예: UTF-8, SHA-1, HTTP-2, ISO-8601)
+const JIRA_DENYLIST = new Set([
+  "GH", "UTF", "SHA", "MD", "HTTP", "HTTPS", "ISO", "IEEE", "RFC",
+  "AES", "RSA", "TLS", "SSL", "EC", "ES", "CVE", "ASCII", "UCS", "X",
+]);
+
+function hasJiraRef(subject: string): boolean {
+  for (const m of subject.matchAll(JIRA_REF)) {
+    if (!JIRA_DENYLIST.has(m[1])) return true;
+  }
+  return false;
+}
+
 const CLOSE_KEYWORD = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b/i;
 const MERGE_COMMIT = /^Merge (?:pull request #\d+|branch )/;
 const SQUASH_SUFFIX = /\(#\d+\)\s*$/;
@@ -32,7 +46,7 @@ export function computeGitLogStats(subjects: string[]): GitLogStats {
 
   for (const subject of subjects) {
     const hasGithub = GITHUB_REF.test(subject);
-    const hasJira = JIRA_REF.test(subject);
+    const hasJira = hasJiraRef(subject);
     if (hasGithub) github++;
     if (hasJira) jira++;
     if (hasGithub || hasJira) {

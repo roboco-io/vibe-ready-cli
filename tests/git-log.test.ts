@@ -61,6 +61,25 @@ describe("computeGitLogStats", () => {
     expect(stats.issueRefRate).toBe(0);
   });
 
+  it("기술 약어(UTF-8, SHA-1, HTTP-2, ISO-8601)는 Jira 참조로 오탐하지 않는다", () => {
+    const stats = computeGitLogStats([
+      "fix: handle UTF-8 decoding bug",
+      "chore: bump to SHA-256 hashing",
+      "feat: support HTTP-2 multiplexing",
+      "docs: clarify ISO-8601 timestamps",
+    ]);
+    expect(stats.refBreakdown.jira).toBe(0);
+    expect(stats.issueRefRate).toBe(0);
+  });
+
+  it("기술 약어와 진짜 Jira 키가 섞여도 진짜 키만 카운트한다", () => {
+    const stats = computeGitLogStats([
+      "fix: UTF-8 bug in PROJ-42 parser",
+      "chore: SHA-1 cleanup",
+    ]);
+    expect(stats.refBreakdown.jira).toBe(1);
+  });
+
   it("빈 배열은 0 통계를 반환한다", () => {
     const stats = computeGitLogStats([]);
     expect(stats.totalCommits).toBe(0);
