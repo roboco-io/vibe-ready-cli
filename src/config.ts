@@ -2,6 +2,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { CategoryTier } from "./types.js";
 import { CATEGORY_WEIGHTS } from "./types.js";
+import type { AgentId } from "./agents.js";
+import { normalizeAgent, SUPPORTED_AGENTS } from "./agents.js";
 
 export interface CategoryConfig {
   name: string;
@@ -18,6 +20,8 @@ export interface VibeReadyConfig {
     maxGrade: string;
     condition: string;
   };
+  /** 하네스 엔지니어링 평가를 한정할 코딩 에이전트. 미지정 시 자동 감지. */
+  agent?: AgentId;
 }
 
 const CONFIG_FILENAMES = [".vibeready.json", ".vibeready.config.json", "vibeready.config.json"];
@@ -95,7 +99,20 @@ function validateConfig(raw: unknown): VibeReadyConfig {
     }
   }
 
-  return { categories, penaltyRule: validatePenaltyRule(obj.penaltyRule) };
+  return { categories, penaltyRule: validatePenaltyRule(obj.penaltyRule), agent: validateAgent(obj.agent) };
+}
+
+function validateAgent(raw: unknown): AgentId | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (typeof raw !== "string") throw new Error(`agent는 문자열이어야 합니다 (지원: ${SUPPORTED_AGENTS.join(", ")})`);
+  const normalized = normalizeAgent(raw);
+  if (!normalized) throw new Error(`알 수 없는 agent: "${raw}" (지원: ${SUPPORTED_AGENTS.join(", ")})`);
+  return normalized;
+}
+
+/** CLI 옵션이 config보다 우선. 둘 다 없으면 undefined(자동 감지). */
+export function getEffectiveAgent(config: VibeReadyConfig | null, cliAgent?: AgentId | null): AgentId | undefined {
+  return cliAgent ?? config?.agent ?? undefined;
 }
 
 function validatePenaltyRule(raw: unknown): VibeReadyConfig["penaltyRule"] {
