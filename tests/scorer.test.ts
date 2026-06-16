@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { computeResult } from "../src/scorer.js";
-import { gradeFromScore } from "../src/types.js";
+import { gradeFromScore, CATEGORY_WEIGHTS } from "../src/types.js";
 import type { LLMAnalysisOutput } from "../src/types.js";
 
 describe("gradeFromScore", () => {
@@ -38,6 +38,7 @@ function makeLLMOutput(scores: Record<string, number>): LLMAnalysisOutput {
     "리포지토리 구조": "nice",
     "문서화 수준": "nice",
     "하네스 엔지니어링": "nice",
+    "이슈 트래킹 연동": "nice",
   };
 
   return {
@@ -76,13 +77,14 @@ describe("computeResult", () => {
         "테스트 커버리지": 100, // must, 0.20
         "CI/CD": 100,           // must, 0.20
         "훅 기반 검증": 100,    // must, 0.20
-        "리포지토리 구조": 0,   // nice, 0.133
-        "문서화 수준": 0,       // nice, 0.133
-        "하네스 엔지니어링": 0,  // nice, 0.134
+        "리포지토리 구조": 0,   // nice, 0.10
+        "문서화 수준": 0,       // nice, 0.10
+        "하네스 엔지니어링": 0,  // nice, 0.10
+        "이슈 트래킹 연동": 0,  // nice, 0.10
       }),
     );
 
-    // must: 100*0.20*3 = 60, nice: 0, total weight ~1.0, score ~60
+    // must: 100*0.20*3 = 60, nice: 0*0.10*4 = 0, total weight 1.0, score = 60
     expect(result.totalScore).toBeCloseTo(60, 0);
     expect(result.totalGrade).toBe("D");
   });
@@ -177,5 +179,28 @@ describe("computeResult", () => {
 
     expect(result.penaltyApplied).toBe(true);
     expect(result.totalGrade).toBe("C");
+  });
+});
+
+describe("CATEGORY_WEIGHTS", () => {
+  it("가중치 합계는 1.0이다", () => {
+    const total = Object.values(CATEGORY_WEIGHTS).reduce((sum, w) => sum + w.weight, 0);
+    expect(total).toBeCloseTo(1.0, 5);
+  });
+
+  it("이슈 트래킹 연동 카테고리가 nice 0.10으로 존재한다", () => {
+    expect(CATEGORY_WEIGHTS["이슈 트래킹 연동"]).toEqual({ tier: "nice", weight: 0.10 });
+  });
+
+  it("must 카테고리는 3개이고 각 0.20이다", () => {
+    const musts = Object.values(CATEGORY_WEIGHTS).filter((w) => w.tier === "must");
+    expect(musts).toHaveLength(3);
+    for (const m of musts) expect(m.weight).toBe(0.20);
+  });
+
+  it("nice 카테고리는 4개이고 각 0.10이다", () => {
+    const nices = Object.values(CATEGORY_WEIGHTS).filter((w) => w.tier === "nice");
+    expect(nices).toHaveLength(4);
+    for (const n of nices) expect(n.weight).toBe(0.10);
   });
 });

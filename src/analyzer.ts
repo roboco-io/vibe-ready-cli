@@ -2,6 +2,8 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import { buildAnalysisPrompt } from "./prompts/analyze.js";
 import type { LLMAnalysisOutput } from "./types.js";
 import type { CategoryConfig } from "./config.js";
+import type { GitLogContext } from "./git-log.js";
+import type { AgentId } from "./agents.js";
 
 export const DEFAULT_MAX_TURNS = 200;
 export const DEFAULT_MAX_BUDGET_USD = 0.50;
@@ -14,6 +16,8 @@ export interface AnalyzerOptions {
   verbose?: boolean;
   categories?: string[];
   customCategories?: CategoryConfig[];
+  gitLogContext?: GitLogContext | null;
+  agent?: AgentId | null;
 }
 
 export async function analyzeRepository(
@@ -27,6 +31,8 @@ export async function analyzeRepository(
     verbose = false,
     categories,
     customCategories,
+    gitLogContext,
+    agent,
   } = options;
 
   if (verbose) {
@@ -37,7 +43,7 @@ export async function analyzeRepository(
   const timeout = setTimeout(() => abortController.abort(), timeoutMs);
 
   try {
-    const prompt = buildAnalysisPrompt(categories, customCategories);
+    const prompt = buildAnalysisPrompt(categories, customCategories, gitLogContext, agent);
 
     let resultText: string | null = null;
     let structuredOutput: unknown = null;

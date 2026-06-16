@@ -11,7 +11,7 @@
 
 A CLI tool that analyzes how ready a repository is for vibe coding (AI agent-based development).
 
-Using the Claude Agent SDK, an LLM directly explores the repository, scores it across 6 categories, and provides an overall grade along with specific improvement recommendations.
+Using the Claude Agent SDK, an LLM directly explores the repository, scores it across 7 categories, and provides an overall grade along with specific improvement recommendations. Commit-log stats (issue reference rate, PR workflow patterns) are pre-extracted and injected into the analysis prompt before the LLM call.
 
 ## Installation & Usage
 
@@ -59,6 +59,7 @@ npm test
 | `-v, --verbose` | - | Show detailed analysis findings |
 | `-m, --markdown` | - | Output in Markdown format |
 | `-c, --category <names>` | all | Analyze specific categories only (comma-separated) |
+| `--agent <tool>` | auto-detect | Limit Harness Engineering scoring to one coding agent: `claude`, `codex`, `cursor`, or `copilot`. When set, other agents' files (AGENTS.md, .cursorrules, etc.) are ignored — never penalized |
 | `-b, --branch <branches>` | current | Analyze specific branches (comma-separated, with comparison report) |
 | `-o, --output <file>` | - | Save report to file (.md extension auto-detected) |
 | `--pdf <file>` | - | Export report as PDF (requires pandoc + xelatex) |
@@ -89,9 +90,10 @@ npm test
 ### Nice-to-Have
 | Category | Weight | What's Analyzed |
 |----------|--------|-----------------|
-| Repository Structure | 13.3% | Directory organization, dependency management, configuration separation |
-| Documentation Level | 13.3% | README, CONTRIBUTING, API docs, architecture docs |
-| Harness Engineering | 13.4% | CLAUDE.md, AGENTS.md, .claude/settings.json, skills, commands, multi-AI tool support |
+| Repository Structure | 10% | Directory organization, dependency management, configuration separation |
+| Documentation Level | 10% | README, CONTRIBUTING, API docs, architecture docs |
+| Harness Engineering | 10% | Single-agent harness completeness — context + safety + extensions for one agent (e.g. Claude Code: CLAUDE.md + .claude/settings.json + skills/commands; or Codex: AGENTS.md). Supporting one agent fully = full marks; multi-agent support is a tiebreaker bonus only |
+| Issue Tracking Integration | 10% | Issue reference rate in commits (GitHub #N / Jira ABC-123), PR workflow patterns |
 
 ## Configuration
 
@@ -117,13 +119,15 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
     "enabled": true,
     "maxGrade": "C",
     "condition": "any must-have category F"
-  }
+  },
+  "agent": "claude"
 }
 ```
 
 - Override default category weights and tiers
 - Add custom categories with `description` and `checkpoints`
 - Weights are auto-normalized if they don't sum to 1.0
+- `"agent"` pins Harness Engineering to one coding agent (`claude` / `codex` / `cursor` / `copilot`). Omit it for auto-detection. The `--agent` CLI flag overrides this field.
 - Supported filenames: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`
 - See [.vibeready.example.json](.vibeready.example.json) for a full example
 
@@ -146,6 +150,7 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
   Repository Structure   Nice      80       B
   Documentation Level    Nice      70       C
   Harness Engineering     Nice      60       D
+  Issue Tracking Integration Nice   75       C
   ─────────────────────────────────────────────────
 
   ⚠ Must-Have category F grade: Hook-based Validation → Overall grade capped at C

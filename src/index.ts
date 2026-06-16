@@ -3,8 +3,9 @@
 import { Command } from "commander";
 import { resolve } from "node:path";
 import { existsSync, writeFileSync, unlinkSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execSync, execFileSync } from "node:child_process";
 import { analyzeRepository } from "./analyzer.js";
+import { collectGitLogContext } from "./git-log.js";
 import { computeResult } from "./scorer.js";
 import {
   printReport,
@@ -17,9 +18,11 @@ import {
 } from "./reporter.js";
 import { getCachedResult, setCachedResult } from "./cache.js";
 import { ALL_CATEGORIES } from "./prompts/analyze.js";
-import { loadConfig, getEffectiveCategories, getEffectiveWeights } from "./config.js";
+import { loadConfig, getEffectiveCategories, getEffectiveWeights, getEffectiveAgent } from "./config.js";
+import { normalizeAgent, SUPPORTED_AGENTS, AGENT_PROFILES } from "./agents.js";
 import type { BranchResult } from "./types.js";
 import type { VibeReadyConfig } from "./config.js";
+import type { AgentId } from "./agents.js";
 
 const program = new Command();
 
@@ -31,6 +34,7 @@ program
   .option("-v, --verbose", "Show detailed analysis findings")
   .option("-m, --markdown", "Output in Markdown format")
   .option("-c, --category <names>", "Analyze specific categories only (comma-separated)")
+  .option("--agent <tool>", "Limit harness evaluation to one coding agent (claude|codex|cursor|copilot). Default: auto-detect")
   .option("-b, --branch <branches>", "Analyze specific branches (comma-separated)")
   .option("--no-cache", "Skip cache and force fresh analysis")
   .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
@@ -55,6 +59,17 @@ program
       ? opts.branch.split(",").map((b) => b.trim())
       : undefined;
 
+    // --agent 옵션 검증
+    let cliAgent: AgentId | null = null;
+    if (typeof opts.agent === "string") {
+      cliAgent = normalizeAgent(opts.agent);
+      if (!cliAgent) {
+        console.error(`Error: 알 수 없는 에이전트: "${opts.agent}"`);
+        console.error(`지원 에이전트: ${SUPPORTED_AGENTS.join(", ")}`);
+        process.exit(1);
+      }
+    }
+
     // 설정 파일 로드
     const config = loadConfig(repoPath);
     if (config && verbose) {
@@ -77,6 +92,11 @@ program
 
     const customCategories = config ? effectiveCats : undefined;
     const customWeights = config ? getEffectiveWeights(config) : undefined;
+    const agent = getEffectiveAgent(config, cliAgent) ?? null;
+
+    if (agent && verbose) {
+      process.stderr.write(`하네스 평가 대상 에이전트: ${AGENT_PROFILES[agent].label}\n`);
+    }
 
     const analyzerOpts = {
       maxTurns: Number(opts.maxTurns),
@@ -85,6 +105,7 @@ program
       verbose,
       categories,
       customCategories,
+      agent,
     };
 
     try {
@@ -109,7 +130,7 @@ program
 
 async function handleSingleBranch(
   repoPath: string,
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[] },
+  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
   customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
@@ -118,13 +139,15 @@ async function handleSingleBranch(
 
   if (verbose) process.stderr.write("분석 중");
 
-  let llmOutput = useCache ? getCachedResult(repoPath) : null;
+  const agent = analyzerOpts.agent ?? null;
+  let llmOutput = useCache ? getCachedResult(repoPath, agent) : null;
 
   if (llmOutput) {
     if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
   } else {
-    llmOutput = await analyzeRepository(repoPath, analyzerOpts);
-    if (useCache) setCachedResult(repoPath, llmOutput);
+    const gitLogContext = collectGitLogContext(repoPath, verbose);
+    llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
+    if (useCache) setCachedResult(repoPath, llmOutput, agent);
   }
 
   const result = computeResult(llmOutput, customWeights);
@@ -134,7 +157,7 @@ async function handleSingleBranch(
 async function handleMultiBranch(
   repoPath: string,
   branches: string[],
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[] },
+  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
   customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
@@ -158,7 +181,7 @@ async function handleMultiBranch(
 
       // 브랜치 전환
       try {
-        execSync(`git checkout ${branch}`, { cwd: repoPath, stdio: "pipe" });
+        execFileSync("git", ["checkout", branch], { cwd: repoPath, stdio: "pipe" });
       } catch {
         console.error(`Error: 브랜치 "${branch}"로 전환할 수 없습니다.`);
         continue;
@@ -166,13 +189,15 @@ async function handleMultiBranch(
 
       if (verbose) process.stderr.write("분석 중");
 
-      let llmOutput = useCache ? getCachedResult(repoPath) : null;
+      const agent = analyzerOpts.agent ?? null;
+      let llmOutput = useCache ? getCachedResult(repoPath, agent) : null;
 
       if (llmOutput) {
         if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
       } else {
-        llmOutput = await analyzeRepository(repoPath, analyzerOpts);
-        if (useCache) setCachedResult(repoPath, llmOutput);
+        const gitLogContext = collectGitLogContext(repoPath, verbose);
+        llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
+        if (useCache) setCachedResult(repoPath, llmOutput, agent);
       }
 
       branchResults.push({
@@ -183,7 +208,7 @@ async function handleMultiBranch(
   } finally {
     // 원래 브랜치로 복원
     try {
-      execSync(`git checkout ${originalBranch}`, { cwd: repoPath, stdio: "pipe" });
+      execFileSync("git", ["checkout", originalBranch], { cwd: repoPath, stdio: "pipe" });
     } catch {
       console.error(`Warning: 원래 브랜치(${originalBranch})로 복원하지 못했습니다.`);
     }

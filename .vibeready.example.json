@@ -48,5 +48,6 @@
     "enabled": true,
     "maxGrade": "C",
     "condition": "any must-have category F"
-  }
+  },
+  "agent": "claude"
 }

@@ -5,38 +5,33 @@ export const ALL_CATEGORIES = [
   "리포지토리 구조",
   "문서화 수준",
   "하네스 엔지니어링",
+  "이슈 트래킹 연동",
 ];
 
 import type { CategoryConfig } from "../config.js";
+import type { GitLogContext } from "../git-log.js";
+import type { AgentId } from "../agents.js";
+import { buildAgentFocusNote } from "../agents.js";
 
-export function buildAnalysisPrompt(categories?: string[], customCategories?: CategoryConfig[]): string {
+export function buildAnalysisPrompt(
+  categories?: string[],
+  customCategories?: CategoryConfig[],
+  gitLogContext?: GitLogContext | null,
+  agent?: AgentId | null,
+): string {
   const filterNote = categories && categories.length > 0
     ? `\n\n**IMPORTANT: Only analyze the following categories: ${categories.join(", ")}. Skip all other categories.**\n`
     : "";
+
+  const agentNote = agent ? buildAgentFocusNote(agent) : "";
 
   const customNote = customCategories && customCategories.length > 0
     ? buildCustomCategoriesNote(customCategories)
     : "";
 
-function buildCustomCategoriesNote(cats: CategoryConfig[]): string {
-  const lines = ["\n\n## Custom Categories (from config file)\n\nThe following categories are defined by the project's config file. Evaluate them IN ADDITION TO or INSTEAD OF the default categories above, based on whether they replace or extend defaults.\n"];
-  for (const cat of cats) {
-    if (!ALL_CATEGORIES.includes(cat.name)) {
-      lines.push(`### ${cat.name} (tier: "${cat.tier}")`);
-      if (cat.description) lines.push(`   ${cat.description}`);
-      if (cat.checkpoints && cat.checkpoints.length > 0) {
-        lines.push("   Check for:");
-        for (const cp of cat.checkpoints) {
-          lines.push(`   - ${cp}`);
-        }
-      }
-      lines.push("");
-    }
-  }
-  return lines.length > 1 ? lines.join("\n") : "";
-}
+  const gitLogNote = buildGitLogNote(gitLogContext ?? null);
 
-  return `You are a Vibe Coding Readiness Analyst. Your job is to analyze a repository and score how ready it is for AI-assisted "vibe coding" (using AI coding agents like Claude Code, Cursor, GitHub Copilot, etc.).${filterNote}
+  return `You are a Vibe Coding Readiness Analyst. Your job is to analyze a repository and score how ready it is for AI-assisted "vibe coding" (using AI coding agents like Claude Code, Cursor, GitHub Copilot, etc.).${filterNote}${agentNote}
 
 ## Instructions
 
@@ -47,7 +42,7 @@ Analyze the repository in the current working directory. Be efficient with your 
 
 IMPORTANT: Be efficient. Do NOT read source code files. Focus on config files, README, and directory structure. Complete your analysis within 20 tool calls.
 
-Score each of the following 6 categories from 0 to 100. Be precise and evidence-based.
+Score each of the following 7 categories from 0 to 100. Be precise and evidence-based.
 
 ## Categories
 
@@ -128,37 +123,52 @@ Score each of the following 6 categories from 0 to 100. Be precise and evidence-
 
 6. **하네스 엔지니어링** (tier: "nice")
    Harness Engineering = AI 에이전트가 코드베이스를 효과적으로 이해하고 안전하게 작업할 수 있도록 구성하는 것.
-   Check for:
 
-   **컨텍스트 제공 (에이전트가 프로젝트를 이해할 수 있는가?)**
-   - CLAUDE.md: 프로젝트 개요, 기술 스택, 빌드 명령어, 아키텍처, 데이터 플로우, 코딩 컨벤션이 포함되어 있는가?
-   - AGENTS.md: 에이전트 작업 가이드라인, 모듈 구조, 확장 포인트, 금지 사항이 있는가?
-   - .cursor/rules/ 또는 .cursorrules: Cursor IDE용 규칙 파일
-   - .github/copilot-instructions.md: GitHub Copilot 지침
+   **CRITICAL — 단일 에이전트 기준 평가:**
+   여러 AI 에이전트(Claude Code, Codex, Cursor, Copilot 등)를 모두 지원할 필요는 없습니다.
+   프로젝트가 채택한 **하나의 에이전트**에 대해 컨텍스트·안전·확장 설정이 충실하면 만점입니다.
+   먼저 레포에 실제로 구성된 에이전트(.claude/, AGENTS.md, .cursor/·.cursorrules, .github/copilot-instructions.md 등의 존재)를 식별하세요.
+   각 에이전트 생태계를 따로 평가하고, **가장 잘 갖춰진 단일 에이전트의 완성도**를 점수의 기준으로 삼으세요.
+   구성되지 않은 에이전트의 부재는 감점 사유가 아닙니다.
+   단일 에이전트가 완비되었다면 그것만으로 이미 만점입니다. 한 도구만 갖춘 것은 감점 사유가 아닙니다.
+   여러 에이전트를 동시에 지원하는 것은 점수 기준이 아니라 **소폭 가산(타이브레이커)** 요소일 뿐입니다.
+   (예: CLAUDE.md + .claude/settings.json + .claude/skills/·commands/·agents/ 가 완비되었다면
+   AGENTS.md·.cursorrules·copilot-instructions.md 가 없어도 100점입니다.)
 
-   **에이전트 권한/안전 설정 (에이전트가 안전하게 작업할 수 있는가?)**
-   - .claude/settings.json: 에이전트 권한 설정 (허용 도구, 차단 도구)
-   - PreCommit 훅: 에이전트 커밋 전 자동 검증 (빌드+테스트)
-   - 읽기 전용 도구 제한 설정
+   에이전트별 신호 (이 중 하나의 에이전트만 충족해도 됨):
+   - **Claude Code**: CLAUDE.md(컨텍스트) + .claude/settings.json(권한/안전) + .claude/{skills,commands,agents}/(확장) + PreCommit 훅
+   - **Codex**: AGENTS.md(컨텍스트) + .codex/ 설정 + .codex/skills/(확장)
+   - **Cursor**: .cursor/rules/ 또는 .cursorrules(컨텍스트/규칙)
+   - **GitHub Copilot**: .github/copilot-instructions.md(컨텍스트)
 
-   **스킬/커맨드 확장 (에이전트가 프로젝트 특화 작업을 수행할 수 있는가?)**
-   - .claude/skills/: 커스텀 스킬 정의
-   - .claude/commands/: 커스텀 명령 정의
-   - .codex/skills/: Codex용 스킬 정의
-   - MCP 서버 설정
+   선택한 단일 에이전트 안에서 다음 3개 축을 평가:
+   **① 컨텍스트 제공** — 가이드 문서가 단순 설명이 아닌, 에이전트가 즉시 활용 가능한 구조화된 정보(프로젝트 개요, 기술 스택, 빌드 명령어, 아키텍처/데이터 플로우, 코딩 컨벤션)를 담는가?
+   **② 안전 설정** — 권한/도구 제한(settings.json 등) + PreCommit 등 커밋 전 자동 검증(빌드+테스트) 훅이 있는가?
+   **③ 확장** — 스킬/커맨드/에이전트/MCP 서버 등 프로젝트 특화 확장이 있는가?
 
-   **컨텍스트 품질 (문서가 에이전트 친화적으로 작성되었는가?)**
-   - CLAUDE.md가 단순 설명이 아닌 에이전트가 즉시 활용 가능한 구조화된 정보를 포함하는가? (빌드 명령어, 아키텍처 다이어그램, 데이터 플로우)
-   - 다중 AI 도구 지원 여부 (Claude + Cursor + Copilot 등)
-
-   Scoring:
+   Scoring (가장 잘 갖춰진 단일 에이전트 기준):
    - 0 = AI 에이전트 설정 전무
    - 20 = 기본 README만 존재 (에이전트 전용 문서 없음)
-   - 40 = CLAUDE.md 또는 AGENTS.md 중 하나만 존재 (기본 수준)
-   - 60 = CLAUDE.md + AGENTS.md 존재, 프로젝트 컨텍스트 포함
-   - 80 = 컨텍스트 + 안전 설정 + 스킬/커맨드 중 일부 구성
-   - 100 = 포괄적 하네스: 컨텍스트(CLAUDE.md+AGENTS.md) + 안전설정(settings.json+PreCommit) + 스킬/커맨드 + 다중 AI 도구 지원
+   - 40 = 단일 에이전트 가이드 문서만 존재 (예: CLAUDE.md 또는 AGENTS.md, 기본 수준)
+   - 60 = 단일 에이전트의 컨텍스트 문서가 프로젝트 정보를 충실히 포함 (①)
+   - 80 = 단일 에이전트에 컨텍스트 + (안전 설정 또는 확장) 구성 (① + ② 또는 ③)
+   - 100 = 단일 에이전트 하네스 완비: 충실한 컨텍스트 + 안전 설정(권한/PreCommit) + 확장(스킬/커맨드/에이전트/MCP) (① + ② + ③)
+   - 가산점(타이브레이커): 위 기준으로 단일 에이전트 점수를 정한 뒤, 다른 에이전트 생태계도 추가 지원하면 동급 내에서 소폭 가산(상한 100). 단일 에이전트가 이미 완비(100)면 추가 가산 없음.
 
+7. **이슈 트래킹 연동** (tier: "nice")
+   커밋과 이슈 트래커(GitHub Issues, Jira 등)의 연동 수준 = 작업 추적성. AI 에이전트가 변경 의도를 파악하는 데 중요.
+   Check for:
+   - 커밋 메시지 이슈 참조율: Git Log Context 섹션의 통계를 1차 근거로 사용 (샘플에서 비표준 트래커 참조 발견 시 보정)
+   - PR 기반 워크플로: Git Log Context의 머지/squash 통계 기반
+   - 이슈/PR 템플릿: .github/ISSUE_TEMPLATE/, .github/PULL_REQUEST_TEMPLATE.md (Glob으로 확인)
+   - 강제 장치: commitlint 이슈 참조 규칙, GitHub Actions 이슈 자동화 워크플로, Jira 설정 파일 (Grep/Read로 확인)
+   - Scoring:
+   - 0 = 이슈 연동 흔적 없음
+   - 20 = 템플릿만 존재, 커밋 참조 없음
+   - 40 = 커밋 이슈 참조율 낮음(<30%) 또는 PR 워크플로만 존재
+   - 60 = 참조율 보통(30~60%) + PR 워크플로
+   - 80 = 참조율 높음(60% 이상) + PR 워크플로 + 템플릿
+   - 100 = 참조율 높음 + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)${gitLogNote}
 ## Output Requirements
 
 For each category, provide:
@@ -190,4 +200,40 @@ After completing your analysis, output ONLY a valid JSON object (no markdown, no
 }
 
 Include all categories in the exact names listed above. Output ONLY the JSON, nothing else.${customNote}`;
+}
+
+function buildCustomCategoriesNote(cats: CategoryConfig[]): string {
+  const lines = ["\n\n## Custom Categories (from config file)\n\nThe following categories are defined by the project's config file. Evaluate them IN ADDITION TO or INSTEAD OF the default categories above, based on whether they replace or extend defaults.\n"];
+  for (const cat of cats) {
+    if (!ALL_CATEGORIES.includes(cat.name)) {
+      lines.push(`### ${cat.name} (tier: "${cat.tier}")`);
+      if (cat.description) lines.push(`   ${cat.description}`);
+      if (cat.checkpoints && cat.checkpoints.length > 0) {
+        lines.push("   Check for:");
+        for (const cp of cat.checkpoints) {
+          lines.push(`   - ${cp}`);
+        }
+      }
+      lines.push("");
+    }
+  }
+  return lines.length > 1 ? lines.join("\n") : "";
+}
+
+function buildGitLogNote(ctx: GitLogContext | null): string {
+  if (!ctx) {
+    return `\n\n## Git Log Context\n\n커밋 히스토리를 확인할 수 없습니다 (git 미설치 또는 git 리포지토리 아님). "이슈 트래킹 연동" 카테고리는 커밋 신호 없이 템플릿/설정 신호만으로 평가하세요.\n`;
+  }
+  return `\n\n## Git Log Context (pre-extracted, read-only)
+
+다음은 분석 대상 리포지토리의 최근 ${ctx.totalCommits}개 커밋에서 사전 추출한 결정적 통계입니다. "이슈 트래킹 연동" 카테고리 평가의 1차 근거로 사용하세요.
+
+- 이슈 참조율: ${ctx.issueRefRate}% (GitHub 참조 ${ctx.refBreakdown.github}건, Jira 참조 ${ctx.refBreakdown.jira}건, closes/fixes/resolves 키워드 ${ctx.refBreakdown.keywords}건)
+- 머지 커밋: ${ctx.mergeCommitCount}건
+- PR 워크플로 감지: ${ctx.prWorkflowDetected ? "예" : "아니오"}
+
+최근 커밋 제목 샘플 (최대 50개) — 위 통계가 놓친 비표준 트래커(Linear, Asana 등) 참조 패턴이 보이면 평가에 보정 반영하세요:
+
+${ctx.sampleSubjects.map((s) => `- ${s.replace(/[\r\n]+/g, " ")}`).join("\n")}
+`;
 }
