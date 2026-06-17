@@ -184,6 +184,27 @@ describe("computeResult", () => {
     expect(result.totalScore).toBeCloseTo(85, 0);
   });
 
+  it("optional 가산점이 등급 경계를 넘으면 종합 등급을 올린다 (등급을 낮추지는 않음)", () => {
+    // 가중평균 88(B) + 가산점 5 = 93 → A
+    const result = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 88, recommendations: [], rawFindings: [] },
+          { name: "CI/CD", tier: "must", score: 88, recommendations: [], rawFindings: [] },
+          { name: "보안 설정", tier: "optional", score: 100, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      {
+        "테스트 커버리지": { tier: "must" as const, weight: 0.5 },
+        "CI/CD": { tier: "must" as const, weight: 0.5 },
+        "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 5 },
+      },
+    );
+    expect(result.totalScore).toBeCloseTo(93, 0);
+    expect(result.totalGrade).toBe("A");
+  });
+
   it("optional 카테고리가 0점이면 등급/총점에 영향이 없다", () => {
     const base = {
       "테스트 커버리지": { tier: "must" as const, weight: 0.5 },

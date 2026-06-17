@@ -128,7 +128,7 @@ npm test
 
 - 기본 카테고리의 가중치/tier 변경 가능
 - `description` + `checkpoints`로 커스텀 카테고리 추가 가능
-- **tier 구분**: `must`(F 등급이면 종합 등급이 C로 제한), `nice`(가중평균에 반영), `optional`(등급에 영향 없음 — 점수에 비례해 `bonusCap` 한도 내 가산점만 부여)
+- **tier 구분**: `must`(F 등급이면 종합 등급이 C로 제한), `nice`(가중평균에 반영), `optional`(등급을 낮추지 않음 — 점수에 비례해 `bonusCap` 한도 내 가산점만 부여하므로 총점·등급이 올라갈 수 있음)
 - **채용 / 미채용 / 선택항목**: 항목을 `categories`에 두면 채용, 배열에서 빼면 미채용(분석·채점 제외), `tier: "optional"` + `bonusCap`을 지정하면 가산점 전용 선택항목
 - 가중치 합계가 1.0이 아니면 자동 정규화 (`optional`은 정규화 대상에서 제외되고 `weight` 대신 `bonusCap` 사용)
 - 지원 파일명: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`

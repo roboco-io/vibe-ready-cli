@@ -130,7 +130,7 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
 
 - Override default category weights and tiers
 - Add custom categories with `description` and `checkpoints`
-- **Tiers**: `must` (F caps the overall grade at C), `nice` (counts toward the weighted average), `optional` (never affects the grade — adds bonus points proportional to its score, up to `bonusCap`)
+- **Tiers**: `must` (F caps the overall grade at C), `nice` (counts toward the weighted average), `optional` (never lowers the grade — adds bonus points proportional to its score, up to `bonusCap`, which can raise the total)
 - **Adopt / skip / optional**: include a category to adopt it; remove it from `categories` to skip it (excluded from analysis); set `tier: "optional"` with a `bonusCap` to make it a bonus-only item
 - Weights are auto-normalized if they don't sum to 1.0 (`optional` categories are excluded from normalization and use `bonusCap` instead of `weight`)
 - `"agent"` pins Harness Engineering to one coding agent (`claude` / `codex` / `cursor` / `copilot`). Omit it for auto-detection. The `--agent` CLI flag overrides this field.

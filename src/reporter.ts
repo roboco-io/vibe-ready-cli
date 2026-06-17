@@ -68,7 +68,7 @@ export function printReport(result: AnalysisResult): void {
   }
 
   if (optionalCategories.length > 0) {
-    console.log(chalk.gray("  선택 항목은 등급에 영향을 주지 않으며 점수에 비례해 가산점만 더합니다."));
+    console.log(chalk.gray("  선택 항목은 등급을 낮추지 않으며, 점수에 비례해 가산점만 더합니다."));
   }
 
   console.log(chalk.gray("  ─────────────────────────────────────────────────"));
