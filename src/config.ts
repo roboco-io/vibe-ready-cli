@@ -8,7 +8,10 @@ import { normalizeAgent, SUPPORTED_AGENTS } from "./agents.js";
 export interface CategoryConfig {
   name: string;
   tier: CategoryTier;
+  /** 가중평균에 반영되는 비중(must/nice). optional 카테고리에서는 무시되며 0으로 취급. */
   weight: number;
+  /** optional 카테고리 전용: 점수 비례로 총점에 더해지는 최대 가산점. */
+  bonusCap?: number;
   description?: string;
   checkpoints?: string[];
 }
@@ -51,12 +54,12 @@ export function getEffectiveCategories(config: VibeReadyConfig | null): Category
   }));
 }
 
-export function getEffectiveWeights(config: VibeReadyConfig | null): Record<string, { tier: CategoryTier; weight: number }> {
+export function getEffectiveWeights(config: VibeReadyConfig | null): Record<string, { tier: CategoryTier; weight: number; bonusCap?: number }> {
   if (!config) return CATEGORY_WEIGHTS;
 
-  const weights: Record<string, { tier: CategoryTier; weight: number }> = {};
+  const weights: Record<string, { tier: CategoryTier; weight: number; bonusCap?: number }> = {};
   for (const cat of config.categories) {
-    weights[cat.name] = { tier: cat.tier, weight: cat.weight };
+    weights[cat.name] = { tier: cat.tier, weight: cat.weight, bonusCap: cat.bonusCap };
   }
   return weights;
 }
@@ -78,23 +81,41 @@ function validateConfig(raw: unknown): VibeReadyConfig {
     const c = cat as Record<string, unknown>;
 
     if (typeof c.name !== "string") throw new Error("카테고리 name이 필요합니다");
-    if (c.tier !== "must" && c.tier !== "nice") throw new Error(`카테고리 tier는 "must" 또는 "nice"여야 합니다: ${c.name}`);
-    if (typeof c.weight !== "number" || c.weight <= 0) throw new Error(`카테고리 weight는 양수여야 합니다: ${c.name}`);
+    if (c.tier !== "must" && c.tier !== "nice" && c.tier !== "optional") {
+      throw new Error(`카테고리 tier는 "must", "nice", "optional" 중 하나여야 합니다: ${c.name}`);
+    }
+
+    const isOptional = c.tier === "optional";
+    let bonusCap: number | undefined;
+    if (isOptional) {
+      // optional: weight 대신 bonusCap(가산점 상한)을 사용. weight는 무시(0).
+      if (typeof c.bonusCap !== "number" || c.bonusCap <= 0) {
+        throw new Error(`optional 카테고리는 양수 bonusCap이 필요합니다: ${c.name}`);
+      }
+      bonusCap = c.bonusCap;
+    } else if (typeof c.weight !== "number" || c.weight <= 0) {
+      throw new Error(`카테고리 weight는 양수여야 합니다: ${c.name}`);
+    }
 
     categories.push({
       name: c.name,
       tier: c.tier as CategoryTier,
-      weight: c.weight,
+      weight: isOptional ? 0 : (c.weight as number),
+      bonusCap,
       description: typeof c.description === "string" ? c.description : undefined,
       checkpoints: Array.isArray(c.checkpoints) ? c.checkpoints.map(String) : undefined,
     });
   }
 
-  // 가중치 합계 정규화
-  const totalWeight = categories.reduce((sum, c) => sum + c.weight, 0);
+  // 가중치 합계 정규화 (optional은 가중평균에 들어가지 않으므로 제외)
+  const scorable = categories.filter((c) => c.tier !== "optional");
+  if (scorable.length === 0) {
+    throw new Error("must/nice 카테고리가 최소 1개 필요합니다 (optional만으로는 구성할 수 없음)");
+  }
+  const totalWeight = scorable.reduce((sum, c) => sum + c.weight, 0);
   if (Math.abs(totalWeight - 1.0) > 0.01) {
     const scale = 1.0 / totalWeight;
-    for (const c of categories) {
+    for (const c of scorable) {
       c.weight = Math.round(c.weight * scale * 1000) / 1000;
     }
   }

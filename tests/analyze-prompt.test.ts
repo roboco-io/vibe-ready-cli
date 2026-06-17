@@ -13,8 +13,8 @@ describe("buildAnalysisPrompt", () => {
     });
 
     it("should include AI agent hooks in scoring criteria", () => {
-      expect(prompt).toContain("AI agent PreCommit only");
-      expect(prompt).toContain("AI agent validation");
+      expect(prompt).toContain("AI-agent hook explicitly running equivalent named commands");
+      expect(prompt).toContain("explicit AI-agent hook commands");
     });
 
     it("should still include traditional git hook items", () => {

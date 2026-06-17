@@ -113,7 +113,11 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
       ]
     },
     { "name": "Documentation", "tier": "nice", "weight": 0.15 },
-    { "name": "Harness Engineering", "tier": "nice", "weight": 0.15 }
+    { "name": "Harness Engineering", "tier": "nice", "weight": 0.15 },
+    { "name": "Security", "tier": "optional", "bonusCap": 5,
+      "description": "Optional item: never lowers the grade; adds up to 5 bonus points if present",
+      "checkpoints": [".env is in .gitignore", "Dependency vulnerability scanning configured"]
+    }
   ],
   "penaltyRule": {
     "enabled": true,
@@ -126,7 +130,9 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
 
 - Override default category weights and tiers
 - Add custom categories with `description` and `checkpoints`
-- Weights are auto-normalized if they don't sum to 1.0
+- **Tiers**: `must` (F caps the overall grade at C), `nice` (counts toward the weighted average), `optional` (never lowers the grade — adds bonus points proportional to its score, up to `bonusCap`, which can raise the total)
+- **Adopt / skip / optional**: include a category to adopt it; remove it from `categories` to skip it (excluded from analysis); set `tier: "optional"` with a `bonusCap` to make it a bonus-only item
+- Weights are auto-normalized if they don't sum to 1.0 (`optional` categories are excluded from normalization and use `bonusCap` instead of `weight`)
 - `"agent"` pins Harness Engineering to one coding agent (`claude` / `codex` / `cursor` / `copilot`). Omit it for auto-detection. The `--agent` CLI flag overrides this field.
 - Supported filenames: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`
 - See [.vibeready.example.json](.vibeready.example.json) for a full example

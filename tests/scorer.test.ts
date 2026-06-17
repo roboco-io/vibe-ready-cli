@@ -165,6 +165,113 @@ describe("computeResult", () => {
     expect(scores["CI/CD"]).toBe(0);
   });
 
+  it("optional 카테고리는 가중평균(분모)에 들어가지 않고 가산점으로만 더해진다", () => {
+    const llm: LLMAnalysisOutput = {
+      categories: [
+        { name: "테스트 커버리지", tier: "must", score: 80, recommendations: [], rawFindings: [] },
+        { name: "CI/CD", tier: "must", score: 80, recommendations: [], rawFindings: [] },
+        { name: "보안 설정", tier: "optional", score: 100, recommendations: [], rawFindings: [] },
+      ],
+      summary: "",
+    };
+    const weights = {
+      "테스트 커버리지": { tier: "must" as const, weight: 0.5 },
+      "CI/CD": { tier: "must" as const, weight: 0.5 },
+      "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 5 },
+    };
+    const result = computeResult(llm, weights);
+    // 가중평균 = 80, 가산점 = 100/100 * 5 = 5 → 총점 85
+    expect(result.totalScore).toBeCloseTo(85, 0);
+  });
+
+  it("optional 가산점이 등급 경계를 넘으면 종합 등급을 올린다 (등급을 낮추지는 않음)", () => {
+    // 가중평균 88(B) + 가산점 5 = 93 → A
+    const result = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 88, recommendations: [], rawFindings: [] },
+          { name: "CI/CD", tier: "must", score: 88, recommendations: [], rawFindings: [] },
+          { name: "보안 설정", tier: "optional", score: 100, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      {
+        "테스트 커버리지": { tier: "must" as const, weight: 0.5 },
+        "CI/CD": { tier: "must" as const, weight: 0.5 },
+        "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 5 },
+      },
+    );
+    expect(result.totalScore).toBeCloseTo(93, 0);
+    expect(result.totalGrade).toBe("A");
+  });
+
+  it("optional 카테고리가 0점이면 등급/총점에 영향이 없다", () => {
+    const base = {
+      "테스트 커버리지": { tier: "must" as const, weight: 0.5 },
+      "CI/CD": { tier: "must" as const, weight: 0.5 },
+    };
+    const withoutOpt = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 70, recommendations: [], rawFindings: [] },
+          { name: "CI/CD", tier: "must", score: 70, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      base,
+    );
+    const withOpt = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 70, recommendations: [], rawFindings: [] },
+          { name: "CI/CD", tier: "must", score: 70, recommendations: [], rawFindings: [] },
+          { name: "보안 설정", tier: "optional", score: 0, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      { ...base, "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 10 } },
+    );
+    expect(withOpt.totalScore).toBe(withoutOpt.totalScore);
+    expect(withOpt.totalGrade).toBe(withoutOpt.totalGrade);
+  });
+
+  it("optional 가산점이 더해져도 총점은 100을 넘지 않는다", () => {
+    const result = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 100, recommendations: [], rawFindings: [] },
+          { name: "보안 설정", tier: "optional", score: 100, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      {
+        "테스트 커버리지": { tier: "must" as const, weight: 1.0 },
+        "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 20 },
+      },
+    );
+    expect(result.totalScore).toBe(100);
+  });
+
+  it("optional 카테고리는 F여도 페널티(등급 C 제한) 대상이 아니다", () => {
+    const result = computeResult(
+      {
+        categories: [
+          { name: "테스트 커버리지", tier: "must", score: 100, recommendations: [], rawFindings: [] },
+          { name: "CI/CD", tier: "must", score: 100, recommendations: [], rawFindings: [] },
+          { name: "보안 설정", tier: "optional", score: 0, recommendations: [], rawFindings: [] },
+        ],
+        summary: "",
+      },
+      {
+        "테스트 커버리지": { tier: "must" as const, weight: 0.5 },
+        "CI/CD": { tier: "must" as const, weight: 0.5 },
+        "보안 설정": { tier: "optional" as const, weight: 0, bonusCap: 5 },
+      },
+    );
+    expect(result.penaltyApplied).toBe(false);
+    expect(result.totalGrade).toBe("A");
+  });
+
   it("penalty caps grade at C even if weighted average is A", () => {
     const result = computeResult(
       makeLLMOutput({

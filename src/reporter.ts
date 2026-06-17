@@ -18,7 +18,9 @@ function colorScore(score: number, grade: Grade): string {
 }
 
 function tierLabel(tier: string): string {
-  return tier === "must" ? chalk.red("필수") : chalk.gray("권장");
+  if (tier === "must") return chalk.red("필수");
+  if (tier === "optional") return chalk.cyan("선택");
+  return chalk.gray("권장");
 }
 
 function pad(str: string, len: number): string {
@@ -58,10 +60,15 @@ export function printReport(result: AnalysisResult): void {
 
   const mustCategories = categories.filter((c) => c.tier === "must");
   const niceCategories = categories.filter((c) => c.tier === "nice");
+  const optionalCategories = categories.filter((c) => c.tier === "optional");
 
-  for (const cat of [...mustCategories, ...niceCategories]) {
+  for (const cat of [...mustCategories, ...niceCategories, ...optionalCategories]) {
     const line = `  ${pad(cat.name, 20)} ${pad(tierLabel(cat.tier), 8)} ${pad(colorScore(cat.score, cat.grade), 8)} ${colorGrade(cat.grade)}`;
     console.log(line);
+  }
+
+  if (optionalCategories.length > 0) {
+    console.log(chalk.gray("  선택 항목은 등급을 낮추지 않으며, 점수에 비례해 가산점만 더합니다."));
   }
 
   console.log(chalk.gray("  ─────────────────────────────────────────────────"));
@@ -131,9 +138,10 @@ export function buildMarkdownReport(result: AnalysisResult, verbose: boolean, re
 
   const mustCategories = categories.filter((c) => c.tier === "must");
   const niceCategories = categories.filter((c) => c.tier === "nice");
+  const optionalCategories = categories.filter((c) => c.tier === "optional");
 
-  for (const cat of [...mustCategories, ...niceCategories]) {
-    const tier = cat.tier === "must" ? "필수" : "권장";
+  for (const cat of [...mustCategories, ...niceCategories, ...optionalCategories]) {
+    const tier = cat.tier === "must" ? "필수" : cat.tier === "optional" ? "선택" : "권장";
     lines.push(`| ${cat.name} | ${tier} | ${cat.score} | ${cat.grade} |`);
   }
 
@@ -251,9 +259,10 @@ export function buildMultiBranchMarkdown(branches: BranchResult[], verbose: bool
   const allCats = branches[0].result.categories;
   const mustCats = allCats.filter((c) => c.tier === "must");
   const niceCats = allCats.filter((c) => c.tier === "nice");
+  const optionalCats = allCats.filter((c) => c.tier === "optional");
 
-  for (const cat of [...mustCats, ...niceCats]) {
-    const tier = cat.tier === "must" ? "필수" : "권장";
+  for (const cat of [...mustCats, ...niceCats, ...optionalCats]) {
+    const tier = cat.tier === "must" ? "필수" : cat.tier === "optional" ? "선택" : "권장";
     const scores = branches.map((b) => {
       const found = b.result.categories.find((c) => c.name === cat.name);
       return found ? `| ${found.score} (${found.grade})` : "| -";
