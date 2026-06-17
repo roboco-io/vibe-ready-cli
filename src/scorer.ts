@@ -10,12 +10,13 @@ import {
 
 export function computeResult(
   llmOutput: LLMAnalysisOutput,
-  customWeights?: Record<string, { tier: CategoryTier; weight: number }>,
+  customWeights?: Record<string, { tier: CategoryTier; weight: number; bonusCap?: number }>,
 ): AnalysisResult {
   const weights = customWeights ?? CATEGORY_WEIGHTS;
   const categories: CategoryResult[] = llmOutput.categories.map((cat) => ({
     name: cat.name,
-    tier: cat.tier,
+    // 설정 파일의 tier를 우선 적용(optional 등은 설정에서만 정의됨). 없으면 LLM 출력 tier.
+    tier: weights[cat.name]?.tier ?? cat.tier,
     score: Math.round(Math.max(0, Math.min(100, cat.score))),
     grade: gradeFromScore(cat.score),
     recommendations: cat.recommendations.map((r) => ({
@@ -26,7 +27,9 @@ export function computeResult(
     rawFindings: cat.rawFindings,
   }));
 
-  const totalScore = computeWeightedAverage(categories, weights);
+  const weightedAverage = computeWeightedAverage(categories, weights);
+  const bonus = computeOptionalBonus(categories, weights);
+  const totalScore = Math.round(Math.max(0, Math.min(100, weightedAverage + bonus)) * 100) / 100;
   let totalGrade = gradeFromScore(totalScore);
 
   const { penaltyApplied, penaltyReason } = checkPenalty(categories);
@@ -46,12 +49,14 @@ export function computeResult(
 
 function computeWeightedAverage(
   categories: CategoryResult[],
-  weights: Record<string, { tier: CategoryTier; weight: number }>,
+  weights: Record<string, { tier: CategoryTier; weight: number; bonusCap?: number }>,
 ): number {
   let weightedSum = 0;
   let totalWeight = 0;
 
   for (const cat of categories) {
+    // optional 카테고리는 가중평균에 포함하지 않는다(등급에 영향 없음).
+    if (cat.tier === "optional") continue;
     const config = weights[cat.name];
     const weight = config?.weight ?? (cat.tier === "must" ? 0.20 : 0.10);
     weightedSum += cat.score * weight;
@@ -60,6 +65,20 @@ function computeWeightedAverage(
 
   if (totalWeight === 0) return 0;
   return Math.round(weightedSum / totalWeight * 100) / 100;
+}
+
+/** optional 카테고리는 점수 비례로 가산점(최대 bonusCap)을 총점에 더한다. */
+function computeOptionalBonus(
+  categories: CategoryResult[],
+  weights: Record<string, { tier: CategoryTier; weight: number; bonusCap?: number }>,
+): number {
+  let bonus = 0;
+  for (const cat of categories) {
+    if (cat.tier !== "optional") continue;
+    const cap = weights[cat.name]?.bonusCap ?? 0;
+    bonus += (cat.score / 100) * cap;
+  }
+  return bonus;
 }
 
 function checkPenalty(categories: CategoryResult[]): {

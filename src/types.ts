@@ -1,6 +1,6 @@
 export type Grade = "A" | "B" | "C" | "D" | "F";
 
-export type CategoryTier = "must" | "nice";
+export type CategoryTier = "must" | "nice" | "optional";
 
 export interface RawFinding {
   item: string;
@@ -77,7 +77,7 @@ export const ANALYSIS_JSON_SCHEMA = {
         type: "object" as const,
         properties: {
           name: { type: "string" as const },
-          tier: { type: "string" as const, enum: ["must", "nice"] },
+          tier: { type: "string" as const, enum: ["must", "nice", "optional"] },
           score: { type: "number" as const, minimum: 0, maximum: 100 },
           recommendations: {
             type: "array" as const,

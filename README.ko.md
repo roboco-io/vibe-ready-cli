@@ -112,7 +112,11 @@ npm test
       ]
     },
     { "name": "문서화 수준", "tier": "nice", "weight": 0.15 },
-    { "name": "하네스 엔지니어링", "tier": "nice", "weight": 0.15 }
+    { "name": "하네스 엔지니어링", "tier": "nice", "weight": 0.15 },
+    { "name": "보안 강화", "tier": "optional", "bonusCap": 5,
+      "description": "선택항목: 등급에 영향을 주지 않고, 점수에 비례해 최대 5점 가산",
+      "checkpoints": [".env가 .gitignore에 포함", "의존성 취약점 스캔 설정 여부"]
+    }
   ],
   "penaltyRule": {
     "enabled": true,
@@ -124,7 +128,9 @@ npm test
 
 - 기본 카테고리의 가중치/tier 변경 가능
 - `description` + `checkpoints`로 커스텀 카테고리 추가 가능
-- 가중치 합계가 1.0이 아니면 자동 정규화
+- **tier 구분**: `must`(F 등급이면 종합 등급이 C로 제한), `nice`(가중평균에 반영), `optional`(등급에 영향 없음 — 점수에 비례해 `bonusCap` 한도 내 가산점만 부여)
+- **채용 / 미채용 / 선택항목**: 항목을 `categories`에 두면 채용, 배열에서 빼면 미채용(분석·채점 제외), `tier: "optional"` + `bonusCap`을 지정하면 가산점 전용 선택항목
+- 가중치 합계가 1.0이 아니면 자동 정규화 (`optional`은 정규화 대상에서 제외되고 `weight` 대신 `bonusCap` 사용)
 - 지원 파일명: `.vibeready.json`, `.vibeready.config.json`, `vibeready.config.json`
 - 전체 예시: [.vibeready.example.json](.vibeready.example.json)
 

@@ -1,40 +1,21 @@
 {
+  "_comment": "vibe-ready 평가 설정 예시. 기본 7개 카테고리의 기본값을 그대로 담았습니다. 필요한 항목만 수정/제거하거나, optional 항목을 추가하세요.",
+  "_tier": "tier 값: 'must'=필수(F 등급이면 종합 등급이 C로 제한), 'nice'=권장(가중평균에 반영), 'optional'=선택(등급에 영향 없음, 점수에 비례해 bonusCap 한도 내 가산점만 부여).",
+  "_adopt": "항목 채용=categories에 포함. 미채용=배열에서 제거(분석·채점 제외). 선택항목=tier를 'optional'로 지정하고 bonusCap 설정.",
+  "_weight": "must/nice의 weight는 합이 1.0이 아니어도 자동 정규화됩니다. optional은 weight 대신 bonusCap(최대 가산점)을 사용합니다.",
   "categories": [
-    {
-      "name": "테스트 커버리지",
-      "tier": "must",
-      "weight": 0.20
-    },
-    {
-      "name": "CI/CD",
-      "tier": "must",
-      "weight": 0.20
-    },
-    {
-      "name": "훅 기반 검증",
-      "tier": "must",
-      "weight": 0.20
-    },
-    {
-      "name": "리포지토리 구조",
-      "tier": "nice",
-      "weight": 0.13
-    },
-    {
-      "name": "문서화 수준",
-      "tier": "nice",
-      "weight": 0.13
-    },
-    {
-      "name": "하네스 엔지니어링",
-      "tier": "nice",
-      "weight": 0.14
-    },
+    { "name": "테스트 커버리지", "tier": "must", "weight": 0.20 },
+    { "name": "CI/CD", "tier": "must", "weight": 0.20 },
+    { "name": "훅 기반 검증", "tier": "must", "weight": 0.20 },
+    { "name": "리포지토리 구조", "tier": "nice", "weight": 0.10 },
+    { "name": "문서화 수준", "tier": "nice", "weight": 0.10 },
+    { "name": "하네스 엔지니어링", "tier": "nice", "weight": 0.10 },
+    { "name": "이슈 트래킹 연동", "tier": "nice", "weight": 0.10 },
     {
       "name": "보안 설정",
-      "tier": "must",
-      "weight": 0.15,
-      "description": "리포지토리의 보안 관련 설정을 평가합니다",
+      "tier": "optional",
+      "bonusCap": 5,
+      "description": "선택항목 예시: 없어도 등급에 영향을 주지 않지만, 갖추면 최대 5점까지 가산됩니다.",
       "checkpoints": [
         ".env 파일이 .gitignore에 포함되어 있는가",
         "시크릿/API 키가 소스코드에 하드코딩되어 있지 않은가",
