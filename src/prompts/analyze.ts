@@ -56,11 +56,11 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - Test scripts in package.json, Makefile, or equivalent
    - Scoring:
    - 0 = no tests at all
-   - 20 = test framework configured but no/trivial test files
-   - 40 = test files exist but minimal (few tests, no coverage config)
-   - 60 = moderate test setup (reasonable test files + test scripts)
-   - 80 = good test coverage setup (test scripts + coverage config)
-   - 100 = comprehensive with coverage thresholds enforced
+   - 20 = test framework/config or test script exists, but zero test files or only placeholder/smoke test files are present
+   - 40 = 1-2 test files or a test directory exists, but no coverage config and no evidence of broad module coverage
+   - 60 = 3+ test files across multiple source areas + runnable test script, but no coverage collection/threshold config
+   - 80 = runnable test script + coverage collection config/script, but coverage thresholds are not enforced
+   - 100 = runnable test script + coverage collection + coverage thresholds enforced in config or CI
 
 2. **CI/CD** (tier: "must")
    Check for:
@@ -69,11 +69,11 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - Multiple environments (dev, staging, prod)
    - Scoring:
    - 0 = no CI/CD
-   - 20 = CI config file exists but minimal (e.g., only build step)
+   - 20 = CI config exists and runs exactly one non-test quality step such as build, install, or formatting
    - 40 = basic pipeline that runs tests
    - 60 = pipeline runs tests + lint or build
    - 80 = runs tests + lint + build
-   - 100 = comprehensive with multiple stages/environments
+   - 100 = tests + lint + build plus an appropriate gated release/deploy/publish workflow; multiple environments only required for deployable services
 
 3. **훅 기반 검증** (tier: "must")
    Check for:
@@ -85,11 +85,11 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - AI coding agent commit validation (e.g., Claude Code PreCommit that runs build+test before commit)
    - Scoring:
    - 0 = no hooks
-   - 20 = hook framework configured but no meaningful checks
-   - 40 = basic single hook (lint only or AI agent PreCommit only)
-   - 60 = lint + format hooks or equivalent AI agent validation
-   - 80 = lint + test + format hooks (traditional or AI agent)
-   - 100 = comprehensive with commit validation + multiple hook types
+   - 20 = hook framework configured, but hooks are empty, disabled, echo-only, or do not run lint/test/type/format/commit-message checks
+   - 40 = exactly one hook type runs one concrete check such as lint, format, typecheck, test, or commit-message validation
+   - 60 = hooks run at least two concrete pre-commit checks, e.g. lint + format, or an AI-agent hook explicitly running equivalent named commands
+   - 80 = hooks run lint + test + format, and optionally typecheck, via traditional hooks or explicit AI-agent hook commands
+   - 100 = pre-commit/pre-push quality hooks plus commit-message validation, with at least two hook events or stages configured
 
 ### Nice-to-Have (권장) Categories — These improve AI coding effectiveness:
 
@@ -100,26 +100,27 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - Configuration separation (config files, environment files, .env.example)
    - Monorepo structure if applicable (workspace config, lerna, turborepo, nx)
    - Scoring:
-   - 0 = flat/chaotic structure
-   - 20 = minimal organization (some directories but no clear pattern)
+   - 0 = no clear source directory, dependency manifest, or separated config/test/doc directories
+   - 20 = 2+ top-level directories exist, but source, tests, config, and docs are not consistently separated
    - 40 = basic structure (src/ exists, dependency file present)
-   - 60 = reasonable organization (clear src/test separation, config files)
-   - 80 = well-organized (clear separation of concerns, config separation)
-   - 100 = exemplary (monorepo/workspace config, .env.example, clean layering)
+   - 60 = source and test/config areas are separated, and dependency manifest is present
+   - 80 = source, tests, config, and docs are separated with recognizable responsibility-based directories
+   - 100 = project-appropriate structure with dependency manifest, config separation, environment example when env vars are used, and clear responsibility-based source directories; workspace config only when monorepo
 
 5. **문서화 수준** (tier: "nice")
    Check for:
-   - README.md existence and quality (sections: description, setup, usage, API, contributing)
-   - CONTRIBUTING.md
+   - README.md existence and quality (sections: description, setup, usage, API)
    - API documentation (Swagger/OpenAPI, JSDoc, docstrings, typedoc)
    - Architecture documentation (ADR, diagrams, design docs)
+   - CONTRIBUTING.md (선택 사항 — 필수 아님, 있으면 소폭 가산되는 타이브레이커일 뿐)
    - Scoring:
    - 0 = no documentation
    - 20 = README exists but minimal (title/description only)
    - 40 = basic README with setup instructions
-   - 60 = good README (setup + usage + structure sections)
-   - 80 = good README + API docs or CONTRIBUTING.md
-   - 100 = comprehensive docs (README + API + architecture + contributing)
+   - 60 = README includes setup, usage, and repository structure sections
+   - 80 = README includes setup, usage, and structure sections + API/CLI/configuration reference appropriate to the project type
+   - 100 = README + project-appropriate API/CLI/configuration reference + architecture/design documentation
+   - CONTRIBUTING.md은 만점 요건이 아닙니다. 부재해도 위 기준을 충족하면 만점이며, 존재 시에만 동점 상황에서 소폭 가산하세요.
 
 6. **하네스 엔지니어링** (tier: "nice")
    Harness Engineering = AI 에이전트가 코드베이스를 효과적으로 이해하고 안전하게 작업할 수 있도록 구성하는 것.
@@ -132,11 +133,11 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    구성되지 않은 에이전트의 부재는 감점 사유가 아닙니다.
    단일 에이전트가 완비되었다면 그것만으로 이미 만점입니다. 한 도구만 갖춘 것은 감점 사유가 아닙니다.
    여러 에이전트를 동시에 지원하는 것은 점수 기준이 아니라 **소폭 가산(타이브레이커)** 요소일 뿐입니다.
-   (예: CLAUDE.md + .claude/settings.json + .claude/skills/·commands/·agents/ 가 완비되었다면
+   (예: CLAUDE.md + .claude/settings.json + .claude/skills/·agents/ 가 완비되었다면
    AGENTS.md·.cursorrules·copilot-instructions.md 가 없어도 100점입니다.)
 
    에이전트별 신호 (이 중 하나의 에이전트만 충족해도 됨):
-   - **Claude Code**: CLAUDE.md(컨텍스트) + .claude/settings.json(권한/안전) + .claude/{skills,commands,agents}/(확장) + PreCommit 훅
+   - **Claude Code**: CLAUDE.md(컨텍스트) + .claude/settings.json(권한/안전) + .claude/{skills,agents}/(확장) + PreCommit 훅
    - **Codex**: AGENTS.md(컨텍스트) + .codex/ 설정 + .codex/skills/(확장)
    - **Cursor**: .cursor/rules/ 또는 .cursorrules(컨텍스트/규칙)
    - **GitHub Copilot**: .github/copilot-instructions.md(컨텍스트)
@@ -144,15 +145,15 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    선택한 단일 에이전트 안에서 다음 3개 축을 평가:
    **① 컨텍스트 제공** — 가이드 문서가 단순 설명이 아닌, 에이전트가 즉시 활용 가능한 구조화된 정보(프로젝트 개요, 기술 스택, 빌드 명령어, 아키텍처/데이터 플로우, 코딩 컨벤션)를 담는가?
    **② 안전 설정** — 권한/도구 제한(settings.json 등) + PreCommit 등 커밋 전 자동 검증(빌드+테스트) 훅이 있는가?
-   **③ 확장** — 스킬/커맨드/에이전트/MCP 서버 등 프로젝트 특화 확장이 있는가?
+   **③ 확장** — 스킬/에이전트/MCP 서버 등 프로젝트 특화 확장이 있는가? (커맨드는 최근 스킬로 대체되는 추세이므로 확장 신호로 보지 않음)
 
    Scoring (가장 잘 갖춰진 단일 에이전트 기준):
    - 0 = AI 에이전트 설정 전무
    - 20 = 기본 README만 존재 (에이전트 전용 문서 없음)
-   - 40 = 단일 에이전트 가이드 문서만 존재 (예: CLAUDE.md 또는 AGENTS.md, 기본 수준)
-   - 60 = 단일 에이전트의 컨텍스트 문서가 프로젝트 정보를 충실히 포함 (①)
-   - 80 = 단일 에이전트에 컨텍스트 + (안전 설정 또는 확장) 구성 (① + ② 또는 ③)
-   - 100 = 단일 에이전트 하네스 완비: 충실한 컨텍스트 + 안전 설정(권한/PreCommit) + 확장(스킬/커맨드/에이전트/MCP) (① + ② + ③)
+   - 40 = 에이전트 전용 가이드 문서는 있으나 프로젝트 개요·기술 스택·빌드/테스트 명령어·아키텍처/데이터 플로우·코딩 컨벤션 중 2개 이하만 포함
+   - 60 = 단일 에이전트 컨텍스트 문서가 위 5개 항목 중 3개 이상 포함 (①)
+   - 80 = 60점 수준의 컨텍스트 + 권한/도구 제한 또는 PreCommit 설정(②), 또는 프로젝트 특화 스킬/에이전트/MCP 중 하나(③) (① + ② 또는 ③)
+   - 100 = 60점 수준의 컨텍스트 + 권한/도구 제한 또는 PreCommit 설정(②) + 프로젝트 특화 스킬/에이전트/MCP 중 하나(③) (① + ② + ③)
    - 가산점(타이브레이커): 위 기준으로 단일 에이전트 점수를 정한 뒤, 다른 에이전트 생태계도 추가 지원하면 동급 내에서 소폭 가산(상한 100). 단일 에이전트가 이미 완비(100)면 추가 가산 없음.
 
 7. **이슈 트래킹 연동** (tier: "nice")
@@ -165,15 +166,15 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - Scoring:
    - 0 = 이슈 연동 흔적 없음
    - 20 = 템플릿만 존재, 커밋 참조 없음
-   - 40 = 커밋 이슈 참조율 낮음(<30%) 또는 PR 워크플로만 존재
+   - 40 = 커밋 이슈 참조율 낮음(<30%), 또는 Git Log Context에서 PR 머지/squash 패턴이 감지되거나 PR 템플릿/브랜치 보호 워크플로가 존재
    - 60 = 참조율 보통(30~60%) + PR 워크플로
    - 80 = 참조율 높음(60% 이상) + PR 워크플로 + 템플릿
-   - 100 = 참조율 높음 + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)${gitLogNote}
+   - 100 = 참조율 높음(60% 이상) + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)${gitLogNote}
 ## Output Requirements
 
 For each category, provide:
 - **name**: The exact Korean category name as listed above
-- **tier**: "must" or "nice"
+- **tier**: "must", "nice", or "optional" (optional 카테고리는 등급에 영향을 주지 않고 가산점으로만 반영되지만, 평가/점수 산정은 동일하게 수행)
 - **score**: 0-100 integer based on evidence found
 - **recommendations**: Array of actionable recommendations (severity: critical/warning/info)
 - **rawFindings**: Array of specific items checked (item name, found: boolean, details)
