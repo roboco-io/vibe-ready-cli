@@ -76,20 +76,19 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - 100 = tests + lint + build plus an appropriate gated release/deploy/publish workflow; multiple environments only required for deployable services
 
 3. **훅 기반 검증** (tier: "must")
-   Check for:
-   - Git hooks setup (husky, .husky/, pre-commit config, lefthook, etc.)
-   - Lint-staged or equivalent (lint-staged in package.json, .lintstagedrc)
-   - Pre-commit hooks that run: linting, unit tests, type checking, formatting
-   - Commit message validation (commitlint, conventional commits)
-   - AI agent hooks (.claude/settings.json or .claude/settings.local.json with PreCommit/PrePush hooks, Cursor pre-commit rules)
-   - AI coding agent commit validation (e.g., Claude Code PreCommit that runs build+test before commit)
-   - Scoring:
-   - 0 = no hooks
-   - 20 = hook framework configured, but hooks are empty, disabled, echo-only, or do not run lint/test/type/format/commit-message checks
-   - 40 = exactly one hook type runs one concrete check such as lint, format, typecheck, test, or commit-message validation
-   - 60 = hooks run at least two concrete pre-commit checks, e.g. lint + format, or an AI-agent hook explicitly running equivalent named commands
-   - 80 = hooks run lint + test + format, and optionally typecheck, via traditional hooks or explicit AI-agent hook commands
-   - 100 = pre-commit/pre-push quality hooks plus commit-message validation, with at least two hook events or stages configured
+   **CRITICAL — 검증 수단 동등성**: 핵심은 커밋/푸시 전에 lint·typecheck·test 등 품질 검증이 자동 실행되는지 여부이며, 그 수단(전통 git hook vs AI 에이전트 훅)은 동등하게 평가한다. husky·lint-staged·전통 git hook의 부재 자체는 감점 사유가 **아니다**. 예를 들어 Claude Code의 PreCommit 훅(.claude/settings.json/settings.local.json)이 lint+typecheck+test를 실행하면, husky나 전통 git hook이 없어도 동일한 검증을 갖춘 것으로 보고 만점이 가능하다.
+   Check for (전통 훅과 AI 에이전트 훅을 동등 취급):
+   - Git hooks setup (husky, .husky/, lint-staged, pre-commit config, lefthook, etc.)
+   - AI agent hooks (.claude/settings.json or .claude/settings.local.json with PreCommit/PrePush hooks, Cursor pre-commit rules) — 전통 훅과 동등하게 인정
+   - 훅이 실제로 실행하는 검증 종류: linting, type checking, unit tests, formatting
+   - Commit message validation (commitlint, conventional commits) — 선택/가산 요소이며 만점 필수 아님
+   - Scoring (검증 수단과 무관하게, 커밋/푸시 전 실제로 실행되는 검증 종류로 판단):
+   - 0 = 커밋/푸시 전 자동 검증이 전혀 없음
+   - 20 = 훅 프레임워크 또는 AI 에이전트 훅은 있으나 비어 있거나 lint/typecheck/test/format을 실제로 실행하지 않음
+   - 40 = 한 종류의 검증만 실행 (예: lint 또는 test 중 하나; 전통 훅이든 AI 에이전트 훅이든)
+   - 60 = 두 종류 이상의 검증 실행 (예: lint + format, 또는 lint + test)
+   - 80 = lint + typecheck + test 중 셋, 또는 lint + test + format 실행 (전통 훅 또는 AI 에이전트 PreCommit/PrePush, 동등)
+   - 100 = lint + typecheck + test를 모두 자동 실행 (전통 훅 또는 AI 에이전트 PreCommit/PrePush 중 무엇이든). commit-message 검증은 가산 요소이며 만점 필수 아님
 
 ### Nice-to-Have (권장) Categories — These improve AI coding effectiveness:
 
@@ -159,17 +158,18 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
 7. **이슈 트래킹 연동** (tier: "nice")
    커밋과 이슈 트래커(GitHub Issues, Jira 등)의 연동 수준 = 작업 추적성. AI 에이전트가 변경 의도를 파악하는 데 중요.
    Check for:
-   - 커밋 메시지 이슈 참조율: Git Log Context 섹션의 통계를 1차 근거로 사용 (샘플에서 비표준 트래커 참조 발견 시 보정)
+   - 커밋 메시지 이슈 참조율: Git Log Context 섹션의 통계를 1차 근거로 사용 (샘플에서 비표준 트래커 참조 발견 시 보정). **GitHub Issues(#N)와 Jira(ABC-123)는 어느 한 쪽만 사용해도 충족이며, 두 트래커를 동시에 쓸 필요는 없다. 프로젝트가 채택한 단일 트래커의 참조율만으로 평가한다.**
    - PR 기반 워크플로: Git Log Context의 머지/squash 통계 기반
-   - 이슈/PR 템플릿: .github/ISSUE_TEMPLATE/, .github/PULL_REQUEST_TEMPLATE.md (Glob으로 확인)
    - 강제 장치: commitlint 이슈 참조 규칙, GitHub Actions 이슈 자동화 워크플로, Jira 설정 파일 (Grep/Read로 확인)
+   - 이슈/PR 템플릿(권장, 점수 필수 요소 아님): .github/ISSUE_TEMPLATE/, .github/PULL_REQUEST_TEMPLATE.md (Glob으로 확인) — 부재해도 감점하지 않으며, 갖추면 동급 내에서 소폭 가산하는 타이브레이커
    - Scoring:
    - 0 = 이슈 연동 흔적 없음
-   - 20 = 템플릿만 존재, 커밋 참조 없음
-   - 40 = 커밋 이슈 참조율 낮음(<30%), 또는 Git Log Context에서 PR 머지/squash 패턴이 감지되거나 PR 템플릿/브랜치 보호 워크플로가 존재
+   - 20 = 커밋 참조가 거의 없고 템플릿 등 약한 신호만 존재
+   - 40 = 커밋 이슈 참조율 낮음(<30%), 또는 Git Log Context에서 PR 머지/squash 패턴이 감지되거나 브랜치 보호 워크플로가 존재
    - 60 = 참조율 보통(30~60%) + PR 워크플로
-   - 80 = 참조율 높음(60% 이상) + PR 워크플로 + 템플릿
-   - 100 = 참조율 높음(60% 이상) + 템플릿 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)${gitLogNote}
+   - 80 = 참조율 높음(60% 이상) + PR 워크플로
+   - 100 = 참조율 높음(60% 이상) + 강제 장치(commitlint 규칙, 자동화 워크플로 등)
+   - 가산(타이브레이커): 이슈/PR 템플릿이 갖춰져 있으면 위 등급 산정 후 동급 내에서 소폭 가산${gitLogNote}
 ## Output Requirements
 
 For each category, provide:
