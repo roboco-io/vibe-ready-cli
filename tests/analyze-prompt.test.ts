@@ -13,8 +13,20 @@ describe("buildAnalysisPrompt", () => {
     });
 
     it("should include AI agent hooks in scoring criteria", () => {
-      expect(prompt).toContain("AI-agent hook explicitly running equivalent named commands");
-      expect(prompt).toContain("explicit AI-agent hook commands");
+      // AI 에이전트 훅을 전통 훅과 동등하게 채점 기준에 반영
+      expect(prompt).toContain("전통 훅과 AI 에이전트 훅을 동등 취급");
+      expect(prompt).toContain("AI 에이전트 PreCommit/PrePush 중 무엇이든");
+    });
+
+    it("husky 등 전통 git hook 부재가 감점 사유가 아님을 명시한다", () => {
+      expect(prompt).toContain("부재 자체는 감점 사유가");
+      expect(prompt).toContain("만점이 가능하다");
+    });
+
+    it("훅 80점과 100점 밴드가 서로 다른 조건으로 구분된다", () => {
+      // 80 = 세 종류이되 풀세트 제외, 100 = lint+typecheck+test 풀세트
+      expect(prompt).toContain("lint·typecheck·test 풀세트는 아닌 경우");
+      expect(prompt).toContain("lint + typecheck + test 세 가지를 모두 자동 실행");
     });
 
     it("should still include traditional git hook items", () => {
