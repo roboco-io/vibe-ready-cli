@@ -86,9 +86,9 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - 0 = 커밋/푸시 전 자동 검증이 전혀 없음
    - 20 = 훅 프레임워크 또는 AI 에이전트 훅은 있으나 비어 있거나 lint/typecheck/test/format을 실제로 실행하지 않음
    - 40 = 한 종류의 검증만 실행 (예: lint 또는 test 중 하나; 전통 훅이든 AI 에이전트 훅이든)
-   - 60 = 두 종류 이상의 검증 실행 (예: lint + format, 또는 lint + test)
-   - 80 = lint + typecheck + test 중 셋, 또는 lint + test + format 실행 (전통 훅 또는 AI 에이전트 PreCommit/PrePush, 동등)
-   - 100 = lint + typecheck + test를 모두 자동 실행 (전통 훅 또는 AI 에이전트 PreCommit/PrePush 중 무엇이든). commit-message 검증은 가산 요소이며 만점 필수 아님
+   - 60 = 두 종류의 검증 실행 (예: lint + test, 또는 lint + format)
+   - 80 = 세 종류의 검증 실행하되 lint·typecheck·test 풀세트는 아닌 경우 (예: lint + test + format — typecheck 없음)
+   - 100 = lint + typecheck + test 세 가지를 모두 자동 실행 (전통 훅 또는 AI 에이전트 PreCommit/PrePush 중 무엇이든, 동등). format·commit-message 검증은 가산 요소이며 만점 필수 아님
 
 ### Nice-to-Have (권장) Categories — These improve AI coding effectiveness:
 
@@ -166,9 +166,9 @@ Score each of the following 7 categories from 0 to 100. Be precise and evidence-
    - 0 = 이슈 연동 흔적 없음
    - 20 = 커밋 참조가 거의 없고 템플릿 등 약한 신호만 존재
    - 40 = 커밋 이슈 참조율 낮음(<30%), 또는 Git Log Context에서 PR 머지/squash 패턴이 감지되거나 브랜치 보호 워크플로가 존재
-   - 60 = 참조율 보통(30~60%) + PR 워크플로
+   - 60 = 참조율 보통(30~60%) + PR 워크플로, 또는 참조율 높음(60% 이상)이나 PR 워크플로 미감지
    - 80 = 참조율 높음(60% 이상) + PR 워크플로
-   - 100 = 참조율 높음(60% 이상) + 강제 장치(commitlint 규칙, 자동화 워크플로 등)
+   - 100 = 참조율 높음(60% 이상) + PR 워크플로 + 강제 장치(commitlint 규칙, 자동화 워크플로 등)
    - 가산(타이브레이커): 이슈/PR 템플릿이 갖춰져 있으면 위 등급 산정 후 동급 내에서 소폭 가산${gitLogNote}
 ## Output Requirements
 

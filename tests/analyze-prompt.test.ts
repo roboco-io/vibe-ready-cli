@@ -23,6 +23,12 @@ describe("buildAnalysisPrompt", () => {
       expect(prompt).toContain("만점이 가능하다");
     });
 
+    it("훅 80점과 100점 밴드가 서로 다른 조건으로 구분된다", () => {
+      // 80 = 세 종류이되 풀세트 제외, 100 = lint+typecheck+test 풀세트
+      expect(prompt).toContain("lint·typecheck·test 풀세트는 아닌 경우");
+      expect(prompt).toContain("lint + typecheck + test 세 가지를 모두 자동 실행");
+    });
+
     it("should still include traditional git hook items", () => {
       expect(prompt).toContain("husky");
       expect(prompt).toContain("lint-staged");
