@@ -9,6 +9,7 @@ src/
   scorer.ts          # Weighted average scoring + penalty logic
   reporter.ts        # Terminal report output (chalk)
   types.ts           # Types, scoring model, JSON schema
+  diagnosis/        # Read-only PR/CI collectors, practical rubric, agent/interview, snapshots
   prompts/
     analyze.ts       # LLM analysis prompts
 tests/
@@ -74,7 +75,7 @@ CLI args → index.ts → analyzer.ts (Claude SDK query) → LLMAnalysisOutput
 
 - `LLMAnalysisOutput`: Raw JSON returned by the LLM (categories + summary)
 - `AnalysisResult`: Final result after scoring (grade, penalties included)
-- `CATEGORY_WEIGHTS`: Defines tiers and weights for 6 categories (types.ts)
+- `CATEGORY_WEIGHTS`: Defines tiers and weights for 7 categories (types.ts)
 - `ANALYSIS_JSON_SCHEMA`: JSON Schema to enforce LLM output structure (types.ts)
 
 ### Extension Points
@@ -89,3 +90,5 @@ CLI args → index.ts → analyzer.ts (Claude SDK query) → LLMAnalysisOutput
 - Do not create broad "quality score" logic without clear justification — each check must explain what it examined and why it passed or failed
 - Only `Read`, `Glob`, and `Grep` tools are allowed in the `query()` function of the Claude Agent SDK
 - Treat the target repository as read-only (no modifications allowed)
+- Process diagnosis (`--diagnose`) uses stable capability IDs and repository-type profiles instead of a global quality score. Follow `docs/process-diagnosis.md` and keep observations separate from hypotheses.
+- Provider APIs are GET-only. Preserve explicit sampling gaps; never turn unavailable data into a passing assessment. Interview JSON must bind to a saved diagnosis's original questions.

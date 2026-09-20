@@ -48,6 +48,7 @@ src/
   scorer.ts          # LLM output → weighted average score + grade + penalty calculation
   reporter.ts        # Terminal report output (chalk formatting)
   types.ts           # Type definitions, scoring model, JSON schema
+  diagnosis/         # PR/CI evidence collection, practical agent diagnosis, interview, comparison
   prompts/
     analyze.ts       # LLM analysis prompt builder
 ```
@@ -98,7 +99,7 @@ CLI args → index.ts → git-log.ts (커밋 로그 사전 추출)
 
 ## Key Constraints
 
-- MVP scope: single repo analysis + terminal output only
+- Scoring mode remains available; `--diagnose` adds read-only development-process investigation, team interviews and JSON/Markdown snapshots (see `docs/process-diagnosis.md`).
 - Language agnostic: LLM makes the judgment (not pattern matching)
 - Read-only: does not modify the target repository
 - SDK tools: only `Read`, `Glob`, `Grep` allowed (`permissionMode: "dontAsk"`)

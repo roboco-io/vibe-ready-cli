@@ -16,4 +16,12 @@
       - CLAUDE.md (or AGENTS.md)
     - Various hooks
     - Skills
-    - Agents
+      - Agents
+
+## Development-process diagnosis
+
+The opt-in `--diagnose` mode helps development teams prepare for AI-assisted work and revisit concrete improvements. It assesses acceptance criteria, reproducible development, behavioral/regression verification, feedback gates, changeability/context, traceability, and delivery appropriate to the repository type.
+
+Evidence comes from read-only repository inspection, GitHub/GitLab PR/MR and CI records, and targeted team interviews. Checks explain the observed problem, evidence, separate cause hypothesis, minimal improvement, completion criteria, and a way to observe progress. Configuration counts and tool adoption are not proxies for engineering effectiveness. Missing evidence is unknown, and irrelevant criteria are explicitly not applicable.
+
+Profiles cover services, libraries, CLIs, data workflows and general repositories. Comparisons use stable capability IDs and matching observation scope. Deployment or incident outcomes are not inferred from PR/CI records alone. See [process diagnosis](process-diagnosis.md).

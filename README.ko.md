@@ -15,6 +15,21 @@ Claude Agent SDK를 사용하여 LLM이 직접 리포지토리를 탐색하고, 
 
 ## 설치 및 실행
 
+### 개발 프로세스 진단
+
+`--diagnose`는 저장소·PR/MR·CI 근거와 팀 인터뷰로 개발 프로세스를 진단합니다. 우선 실행 과제 최대 3개, 소스 위치, 관찰 지표, 후속 비교를 제공하며 서비스·라이브러리·CLI·데이터·일반 저장소를 지원합니다. 기존 점수화 명령은 그대로 사용할 수 있습니다.
+
+```bash
+vibe-ready . --diagnose --goal "피드백 주기 단축" --save-diagnosis ../diagnosis.json
+vibe-ready . --diagnose --provider none --profile cli --interview
+vibe-ready . --diagnose --goal "피드백 주기 단축" --baseline ../diagnosis.json --output ../follow-up.md
+vibe-ready . --diagnosis-file ../diagnosis.json --json
+```
+
+기본 관찰 범위는 최근 30일, PR/MR과 CI 실행 각각 최대 30개입니다. 원격 읽기에는 `GH_TOKEN`/`GITHUB_TOKEN` 또는 `GITLAB_TOKEN`을 사용하며 접근 실패는 수집 공백으로 표시합니다. `--provider none`은 원격 API 수집을 끄지만 Claude Agent SDK는 사용합니다. `--diagnosis-file`은 모델·네트워크 없이 저장된 결과를 재생합니다. 대상 저장소는 읽기 전용이므로 출력은 저장소 밖의 새 파일에만 가능하며 상위 폴더가 존재해야 합니다. 암묵적으로 저장하는 파일은 없습니다.
+
+저장된 질문에 답하려면 `--diagnosis-file ../diagnosis.json --answers ../answers.json`을 사용하세요. 모델을 호출하며 원래 저장소와 커밋이 필요합니다. [상세 옵션, 인터뷰 형식, 지표 해석](docs/process-diagnosis.md)을 참고하세요.
+
 ### 바로 사용 (npm)
 
 ```bash

@@ -15,6 +15,21 @@ Using the Claude Agent SDK, an LLM directly explores the repository, scores it a
 
 ## Installation & Usage
 
+### Development-process diagnosis
+
+`--diagnose` adds evidence-based process diagnosis with up to three actionable improvements, source/PR/CI references, team questions, and follow-up comparison. It supports service, library, CLI, data, and general repositories. The existing scoring command remains unchanged.
+
+```bash
+vibe-ready . --diagnose --goal "Shorten feedback cycles" --save-diagnosis ../diagnosis.json
+vibe-ready . --diagnose --provider none --profile cli --interview
+vibe-ready . --diagnose --goal "Shorten feedback cycles" --baseline ../diagnosis.json --output ../follow-up.md
+vibe-ready . --diagnosis-file ../diagnosis.json --json
+```
+
+The default window is 30 days with at most 30 PR/MRs and 30 CI runs. Remote reads use `GH_TOKEN`/`GITHUB_TOKEN` or `GITLAB_TOKEN`; missing access appears as a collection gap. `--provider none` disables remote API collection but still uses the Claude Agent SDK. Snapshot replay (`--diagnosis-file`) needs no model or network access. Target repositories are read-only: output files must be outside the target, use new filenames, and have an existing parent directory. Nothing is saved implicitly.
+
+To answer saved questions, use `--diagnosis-file ../diagnosis.json --answers ../answers.json` (calls the model and requires the original repository/commit). See [diagnosis options, interview format, and metric limitations](docs/process-diagnosis.md).
+
 ### Quick Start (via npm)
 
 ```bash
