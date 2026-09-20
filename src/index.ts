@@ -23,6 +23,7 @@ import { normalizeAgent, SUPPORTED_AGENTS, AGENT_PROFILES } from "./agents.js";
 import type { BranchResult } from "./types.js";
 import type { VibeReadyConfig } from "./config.js";
 import type { AgentId } from "./agents.js";
+import { runDiagnosisCli } from "./diagnosis/cli.js";
 
 const program = new Command();
 
@@ -42,8 +43,31 @@ program
   .option("--max-turns <number>", "Max LLM agent turns", "200")
   .option("--max-budget <number>", "Max budget in USD per analysis", "0.50")
   .option("--timeout <number>", "Timeout in seconds", "120")
+  .option("--diagnose", "Diagnose the development process using repository and remote evidence")
+  .option("--provider <provider>", "Diagnosis provider: auto|github|gitlab|none", "auto")
+  .option("--remote-url <url>", "Override the diagnosis remote repository URL")
+  .option("--days <number>", "Diagnosis observation window in days (1..3650)", "30")
+  .option("--limit <number>", "Maximum diagnosis PR/MR and CI samples each (1..100)", "30")
+  .option("--profile <profile>", "Diagnosis profile: auto|service|library|cli|data|general", "auto")
+  .option("--goal <text>", "Development-process improvement goal")
+  .option("--answers <file>", "Interview answers JSON (requires --diagnosis-file)")
+  .option("--interview", "Ask diagnosis interview questions when input is interactive")
+  .option("--json", "Emit diagnosis snapshot JSON")
+  .option("--save-diagnosis <file>", "Save a diagnosis snapshot outside the target repository")
+  .option("--baseline <file>", "Compare diagnosis with a previous snapshot")
+  .option("--diagnosis-file <file>", "Replay snapshot, or resume its questions with --answers/--interview")
   .action(async (path: string, opts: Record<string, string | boolean | undefined>) => {
     const repoPath = resolve(path);
+
+    if (opts.diagnose === true || typeof opts.diagnosisFile === "string") {
+      await runDiagnosisCli(repoPath, opts);
+      return;
+    }
+    for (const key of ["provider", "remoteUrl", "days", "limit", "profile", "goal", "answers", "interview", "json", "saveDiagnosis", "baseline"]) {
+      if (program.getOptionValueSource(key) === "cli") {
+        throw new Error("진단 전용 옵션은 --diagnose 또는 --diagnosis-file과 함께 사용하세요.");
+      }
+    }
 
     if (!existsSync(repoPath)) {
       console.error(`Error: 경로를 찾을 수 없습니다: ${repoPath}`);
@@ -279,4 +303,7 @@ function outputResult(
   }
 }
 
-program.parse();
+program.parseAsync().catch((error: unknown) => {
+  console.error(error instanceof Error ? `오류: ${error.message}` : "알 수 없는 오류가 발생했습니다.");
+  process.exitCode = 1;
+});
