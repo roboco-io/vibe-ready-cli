@@ -2,7 +2,7 @@
 
 import { Command } from "commander";
 import { resolve } from "node:path";
-import { existsSync, writeFileSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 import { execSync, execFileSync } from "node:child_process";
 import { analyzeRepository } from "./analyzer.js";
 import { collectGitLogContext } from "./git-log.js";
@@ -30,7 +30,7 @@ const program = new Command();
 program
   .name("vibe-ready")
   .description("Analyze how ready your repository is for vibe coding")
-  .version("0.1.0")
+  .version(JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).version)
   .argument("[path]", "Path to the repository to analyze", ".")
   .option("-v, --verbose", "Show detailed analysis findings")
   .option("-m, --markdown", "Output in Markdown format")
