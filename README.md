@@ -249,13 +249,13 @@ This project applies **harness engineering** so that AI agents (such as Claude C
 
 | File | Role |
 |------|------|
-| `CLAUDE.md` | Core context for agents to understand the project — tech stack, build commands, architecture, data flow, scoring rules, coding conventions |
-| `AGENTS.md` | Agent working guidelines — module structure, test/commit rules, extension points, prohibited actions |
+| `AGENTS.md` | Single source of agent instructions — tech stack, build commands, architecture, data flow, scoring rules, coding/test/commit conventions, extension points, prohibited actions |
+| `CLAUDE.md` | Imports `AGENTS.md` (`@AGENTS.md`) so Claude Code loads the same instructions |
 | `.claude/settings.json` | Agent permissions and hook configuration — allowed tools, PreCommit auto-validation (build+test) |
 
 ### Design Principles
 
-- **Immediately graspable context**: `CLAUDE.md` is written so agents can understand the project structure, build process, and architecture on their first turn
+- **Immediately graspable context**: `AGENTS.md` is written so agents can understand the project structure, build process, and architecture on their first turn; keeping one file avoids drift between Claude Code and Codex instructions
 - **Safe autonomous operation**: `.claude/settings.json` auto-allows only read tools and build/test commands, enabling agents to explore and verify autonomously without destructive behavior
 - **Pre-commit auto-validation**: A PreCommit hook enforces `npm run build && npm test`, preventing agents from committing broken code
 - **Built-in extension guide**: `AGENTS.md` specifies how to add new check modules, output formats, CI gate modes, and more, so agents can add features following consistent patterns
