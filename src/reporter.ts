@@ -1,6 +1,10 @@
 import chalk from "chalk";
 import type { AnalysisResult, BranchResult, CategoryResult, Grade } from "./types.js";
 
+function engineLabel(result: AnalysisResult): string {
+  return result.engine === "codex" ? "Codex CLI" : "Claude Agent SDK";
+}
+
 const GRADE_COLORS: Record<Grade, (text: string) => string> = {
   A: chalk.green,
   B: chalk.blue,
@@ -108,7 +112,7 @@ export function printReport(result: AnalysisResult): void {
   console.log(`  ${summary}`);
   console.log();
   console.log(chalk.gray("  ─────────────────────────────────────────────────"));
-  console.log(chalk.gray("  Powered by Claude Agent SDK | vibe-ready"));
+  console.log(chalk.gray(`  Powered by ${engineLabel(result)} | vibe-ready`));
   console.log();
 }
 
@@ -194,7 +198,7 @@ export function buildMarkdownReport(result: AnalysisResult, verbose: boolean, re
   }
 
   lines.push("---");
-  lines.push("*Powered by Claude Agent SDK | vibe-ready*");
+  lines.push(`*Powered by ${engineLabel(result)} | vibe-ready*`);
 
   return lines.join("\n");
 }
@@ -326,7 +330,8 @@ export function buildMultiBranchMarkdown(branches: BranchResult[], verbose: bool
   }
 
   lines.push("---");
-  lines.push("*Powered by Claude Agent SDK | vibe-ready*");
+  const engines = [...new Set(branches.map(branch => engineLabel(branch.result)))].sort();
+  lines.push(`*Powered by ${engines.join(", ")} | vibe-ready*`);
 
   return lines.join("\n");
 }

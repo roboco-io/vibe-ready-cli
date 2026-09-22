@@ -1,4 +1,7 @@
-import { query, type HookCallback } from "@anthropic-ai/claude-agent-sdk";
+import type { HookCallback } from "@anthropic-ai/claude-agent-sdk";
+import type { ClaudeQuery, EngineRunner } from "../engines/types.js";
+import { runAnalysisEngine } from "../engines/run.js";
+import { assertEngineLimits, resolveEngine } from "../engines/selection.js";
 import { execFileSync } from "node:child_process";
 import { readdirSync, realpathSync } from "node:fs";
 import { relative, resolve, isAbsolute, sep } from "node:path";
@@ -11,8 +14,8 @@ import { object, validateAnswers, validateDiagnosisOutput, validateSnapshot } fr
 import { redactValue } from "./redact.js";
 import type { DiagnosisOptions, DiagnosisOutput, DiagnosisSnapshot, Evidence, RemoteCollection } from "./types.js";
 
-export type QueryRunner = (args: Parameters<typeof query>[0]) => AsyncIterable<unknown>;
-interface Dependencies { query?: QueryRunner; collect?: typeof collectRemoteEvidence; now?: () => Date; resume?: DiagnosisSnapshot; }
+export type QueryRunner = ClaudeQuery;
+interface Dependencies { query?: QueryRunner; codexRun?: EngineRunner; collect?: typeof collectRemoteEvidence; now?: () => Date; resume?: DiagnosisSnapshot; }
 
 function git(repoPath: string, args: string[]): string | null {
   const env = { ...process.env };
@@ -78,6 +81,8 @@ function selectEvidence(evidence: Evidence[], remote: RemoteCollection): Evidenc
 export async function diagnoseRepository(repoPath: string, options: DiagnosisOptions = {}, dependencies: Dependencies = {}): Promise<DiagnosisSnapshot> {
   const root = realpathSync(repoPath);
   const previous = dependencies.resume;
+  const engine = resolveEngine(options.engine, previous?.engine);
+  assertEngineLimits(engine, { maxBudget: options.maxBudgetUsd !== undefined, maxTurns: options.maxTurns !== undefined });
   if (!previous && Object.keys(options.answers ?? {}).length) throw new Error("파일 답변은 저장한 진단 스냅샷과 함께 재개해야 합니다");
   const days = previous?.window.days ?? options.days ?? 30; const limit = previous?.window.limit ?? options.limit ?? 30;
   let turns = options.maxTurns ?? 200; let budget = options.maxBudgetUsd ?? 0.5;
@@ -97,34 +102,21 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
     const allEvidence = redactValue(previous ? structuredClone(previous.evidence) : [...repositoryEvidence(root), ...remote.evidence]);
     const evidence = selectEvidence(allEvidence, remote);
     const metrics = computeDiagnosisMetrics(remote);
-    const runner = dependencies.query ?? query;
     const investigate = async (previous?: DiagnosisOutput): Promise<DiagnosisOutput> => {
       checkAbort();
-      let output: DiagnosisOutput | undefined;
-      for await (const raw of runner({ prompt: buildDiagnosisPrompt(profile, goal, evidence, metrics, remote.gaps, previous), options: {
-        cwd: root, tools: ["Read", "Glob", "Grep"], allowedTools: ["Read", "Glob", "Grep"], permissionMode: "dontAsk",
-        settingSources: [], mcpServers: {}, hooks: { PreToolUse: [{ hooks: [restrictTools(root)] }] },
-        outputFormat: { type: "json_schema", schema: DIAGNOSIS_SCHEMA },
-        maxTurns: turns, maxBudgetUsd: budget, abortController: controller,
-      } })) {
-        checkAbort();
-        const message = object(raw, "에이전트 메시지");
-        if (options.verbose && message.type === "assistant") process.stderr.write(".");
-        if (message.type !== "result") continue;
-        if (message.subtype !== "success") {
-          if (message.subtype === "error_max_turns") throw new Error("진단이 최대 턴 수에 도달했습니다. --max-turns를 늘려보세요.");
-          if (message.subtype === "error_max_budget_usd") throw new Error("진단 예산을 초과했습니다. --max-budget을 늘려보세요.");
-          throw new Error("에이전트 진단이 정상 완료되지 않았습니다");
-        }
-        let data = message.structured_output;
-        if (!data && typeof message.result === "string") {
-          try { data = JSON.parse(message.result.replace(/^```(?:json)?\s*|\s*```$/g, "")); } catch { throw new Error("진단 응답이 유효한 JSON이 아닙니다"); }
-        }
-        output = validateDiagnosisOutput(data, evidence, profile, root);
-        budget = typeof message.total_cost_usd === "number" && Number.isFinite(message.total_cost_usd) && message.total_cost_usd >= 0 ? Math.max(0, budget - message.total_cost_usd) : 0;
-        turns = typeof message.num_turns === "number" && Number.isInteger(message.num_turns) && message.num_turns >= 0 ? Math.max(0, turns - message.num_turns) : 0;
+      const result = await runAnalysisEngine(engine, {
+        repoPath: root, prompt: buildDiagnosisPrompt(profile, goal, evidence, metrics, remote.gaps, previous),
+        schema: DIAGNOSIS_SCHEMA, abortController: controller, verbose: options.verbose,
+        claudeHooks: { PreToolUse: [{ hooks: [restrictTools(root)] }] },
+        maxTurns: engine === "claude" ? turns : undefined,
+        maxBudgetUsd: engine === "claude" ? budget : undefined,
+      }, { claudeQuery: dependencies.query, codexRun: dependencies.codexRun });
+      checkAbort();
+      const output = validateDiagnosisOutput(result.output, evidence, profile, root);
+      if (engine === "claude") {
+        budget = result.costUsd === undefined ? 0 : Math.max(0, budget - result.costUsd);
+        turns = result.turns === undefined ? 0 : Math.max(0, turns - result.turns);
       }
-      if (!output) throw new Error("에이전트가 진단 결과를 반환하지 않았습니다");
       return output;
     };
     let diagnosis = previous ? structuredClone(previous.diagnosis) : await investigate();
@@ -161,7 +153,7 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
       } else remote.gaps.push("남은 예산 또는 턴 수를 확인할 수 없거나 소진되어 인터뷰 답변을 재진단에 반영하지 못했습니다.");
     }
     const snapshot: DiagnosisSnapshot = {
-      schemaVersion: 1, rubricVersion: RUBRIC_VERSION, createdAt: now.toISOString(), repository: remote.repository ?? pathToFileURL(root).href,
+      engine, schemaVersion: 1, rubricVersion: RUBRIC_VERSION, createdAt: now.toISOString(), repository: remote.repository ?? pathToFileURL(root).href,
       repoPath: root, commit: git(root, ["rev-parse", "HEAD"]), profile, goal,
       window: previous?.window ?? { since: new Date(now.getTime() - days * 86_400_000).toISOString(), until: now.toISOString(), days, limit },
       remote, evidence: allEvidence, metrics, answers: usedAnswers, diagnosis,
@@ -175,6 +167,7 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
 
 export async function resumeDiagnosis(repoPath: string, raw: DiagnosisSnapshot, options: DiagnosisOptions = {}, dependencies: Dependencies = {}): Promise<DiagnosisSnapshot> {
   const previous = validateSnapshot(raw);
+  if (options.engine && options.engine !== (previous.engine ?? "claude")) throw new Error("인터뷰 재개 중에는 분석 엔진을 변경할 수 없습니다. 새 진단을 실행하세요.");
   const root = realpathSync(repoPath);
   if (previous.rubricVersion !== RUBRIC_VERSION) throw new Error("평가 기준이 변경되어 진단을 새로 실행해야 합니다");
   if (root !== previous.repoPath || git(root, ["rev-parse", "HEAD"]) !== previous.commit) throw new Error("저장소 경로 또는 커밋이 변경되었습니다. 새 진단을 실행하세요.");

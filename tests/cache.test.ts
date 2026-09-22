@@ -37,6 +37,15 @@ describe("cache", () => {
   it("캐시가 없으면 null을 반환한다", () => {
     expect(getCachedResult(repoPath)).toBeNull();
   });
+  it("엔진과 평가 대상을 각각 분리하고 기본 엔진을 Claude로 취급한다", () => {
+    setCachedResult(repoPath, FAKE_OUTPUT, "codex", "claude");
+    expect(getCachedResult(repoPath, "codex", "codex")).toBeNull();
+    const codexOutput = { ...FAKE_OUTPUT, summary: "Codex 분석" };
+    setCachedResult(repoPath, codexOutput, "codex", "codex");
+    expect(getCachedResult(repoPath, "codex")).toEqual(FAKE_OUTPUT);
+    expect(getCachedResult(repoPath, "codex", "codex")).toEqual(codexOutput);
+    expect(getCachedResult(repoPath, "claude", "codex")).toBeNull();
+  });
 
   it("스토어 버전이 다르면 캐시를 무시하고 null을 반환한다", () => {
     setCachedResult(repoPath, FAKE_OUTPUT);

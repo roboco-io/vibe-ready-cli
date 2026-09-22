@@ -4,6 +4,8 @@ import type { CategoryTier } from "./types.js";
 import { CATEGORY_WEIGHTS } from "./types.js";
 import type { AgentId } from "./agents.js";
 import { normalizeAgent, SUPPORTED_AGENTS } from "./agents.js";
+import type { EngineId } from "./engines/types.js";
+import { parseEngine } from "./engines/selection.js";
 
 export interface CategoryConfig {
   name: string;
@@ -17,6 +19,7 @@ export interface CategoryConfig {
 }
 
 export interface VibeReadyConfig {
+  engine?: EngineId;
   categories: CategoryConfig[];
   penaltyRule?: {
     enabled: boolean;
@@ -42,6 +45,21 @@ export function loadConfig(repoPath: string): VibeReadyConfig | null {
     }
   }
   return null;
+}
+
+/** Diagnosis deliberately ignores legacy scoring categories and harness preferences. */
+export function loadEngineConfig(repoPath: string): EngineId | undefined {
+  for (const filename of CONFIG_FILENAMES) {
+    const filepath = join(repoPath, filename);
+    if (!existsSync(filepath)) continue;
+    try {
+      const raw: unknown = JSON.parse(readFileSync(filepath, "utf8"));
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("설정 파일은 JSON 객체여야 합니다");
+      const engine = (raw as Record<string, unknown>).engine;
+      return engine === undefined ? undefined : parseEngine(engine);
+    } catch { throw new Error(`설정 파일의 분석 엔진을 확인할 수 없습니다 (${filename})`); }
+  }
+  return undefined;
 }
 
 export function getEffectiveCategories(config: VibeReadyConfig | null): CategoryConfig[] {
@@ -70,6 +88,10 @@ function validateConfig(raw: unknown): VibeReadyConfig {
   }
 
   const obj = raw as Record<string, unknown>;
+  const engine = obj.engine === undefined ? undefined : parseEngine(obj.engine);
+  if (obj.categories === undefined && engine !== undefined) {
+    return { engine, categories: getEffectiveCategories(null), penaltyRule: validatePenaltyRule(obj.penaltyRule), agent: validateAgent(obj.agent) };
+  }
 
   if (!Array.isArray(obj.categories) || obj.categories.length === 0) {
     throw new Error("categories 배열이 필요합니다 (최소 1개)");
@@ -120,7 +142,7 @@ function validateConfig(raw: unknown): VibeReadyConfig {
     }
   }
 
-  return { categories, penaltyRule: validatePenaltyRule(obj.penaltyRule), agent: validateAgent(obj.agent) };
+  return { categories, penaltyRule: validatePenaltyRule(obj.penaltyRule), agent: validateAgent(obj.agent), engine };
 }
 
 function validateAgent(raw: unknown): AgentId | undefined {

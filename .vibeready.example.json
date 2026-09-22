@@ -30,5 +30,6 @@
     "maxGrade": "C",
     "condition": "any must-have category F"
   },
-  "agent": "claude"
+  "agent": "claude",
+  "engine": "claude"
 }

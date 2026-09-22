@@ -1,3 +1,5 @@
+import type { EngineId } from "./engines/types.js";
+
 export type Grade = "A" | "B" | "C" | "D" | "F";
 
 export type CategoryTier = "must" | "nice" | "optional";
@@ -24,6 +26,7 @@ export interface CategoryResult {
 }
 
 export interface AnalysisResult {
+  engine?: EngineId;
   categories: CategoryResult[];
   totalScore: number;
   totalGrade: Grade;

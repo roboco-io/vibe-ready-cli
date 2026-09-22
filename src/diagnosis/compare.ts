@@ -5,6 +5,7 @@ function isProblem(finding: Finding | undefined): boolean {
 }
 
 export function compareDiagnoses(before: DiagnosisSnapshot, after: DiagnosisSnapshot): DiagnosisComparison {
+  if ((before.engine ?? "claude") !== (after.engine ?? "claude")) throw new Error("진단 비교 불가: 분석 엔진이 다릅니다. 같은 엔진으로 다시 진단하세요.");
   const dimensions = ["schemaVersion", "rubricVersion", "repository", "profile", "goal"] as const;
   for (const key of dimensions) {
     if (before[key] !== after[key]) throw new Error(`진단 비교 불가: ${key} 값이 다릅니다.`);

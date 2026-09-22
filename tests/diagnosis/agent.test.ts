@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+vi.mock("@anthropic-ai/claude-agent-sdk", () => ({ query: () => { throw new Error("Unexpected live Claude query in test"); } }));
 import { mkdtempSync, writeFileSync, rmSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -17,6 +18,28 @@ async function withRepo(fn: (path: string) => Promise<void>) {
   try { await fn(root); } finally { rmSync(root, { recursive: true, force: true }); }
 }
 describe("diagnosis investigation", () => {
+  it("uses Codex for both investigation and interview without fabricating a dollar cost", async () => {
+    await withRepo(async root => {
+      let calls = 0;
+      const snapshot = await diagnoseRepository(root, { engine: "codex", interview: async () => ({ q1: "PR마다 실행" }) }, {
+        collect: async () => remote,
+        query: async function* () { throw new Error("wrong engine"); },
+        codexRun: async () => { calls++; return { engine: "codex", output: { ...result(), summary: calls === 2 ? "Codex 인터뷰 반영" : "Codex 최초 조사" } }; },
+      });
+      expect(calls).toBe(2);
+      expect(snapshot.engine).toBe("codex");
+      expect(snapshot.diagnosis.summary).toBe("Codex 인터뷰 반영");
+    });
+  });
+  it("resumes a saved Codex engine and refuses a conflicting override", async () => {
+    await withRepo(async root => {
+      const codexRun = async () => ({ engine: "codex" as const, output: result() });
+      const initial = await diagnoseRepository(root, { engine: "codex" }, { collect: async () => remote, codexRun });
+      const resumed = await resumeDiagnosis(root, initial, { answers: { q1: "검증" } }, { codexRun });
+      expect(resumed.engine).toBe("codex");
+      await expect(resumeDiagnosis(root, initial, { engine: "claude", answers: { q1: "검증" } }, { codexRun })).rejects.toThrow(/엔진/);
+    });
+  });
   it("blocks directory-wide Grep and secret files while permitting structured response delivery", async () => {
     await withRepo(async root => {
       writeFileSync(join(root, ".env"), "SECRET=private\n");

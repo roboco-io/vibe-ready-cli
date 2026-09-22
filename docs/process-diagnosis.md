@@ -9,6 +9,7 @@ Diagnosis assesses acceptance criteria, reproducible development, behavioral ver
 | Option | Default | Meaning / 의미 |
 | --- | --- | --- |
 | `--diagnose` | off | Run process diagnosis / 프로세스 진단 실행 |
+| `--engine <engine>` | `claude` | `claude` or `codex`; CLI overrides config / CLI가 설정보다 우선 |
 | `--provider <value>` | `auto` | `auto`, `github`, `gitlab`, `none` |
 | `--remote-url <url>` | Git origin | Override remote / 원격 주소 지정 |
 | `--days <number>` | `30` | 1–3650 days / 관찰 일수 |
@@ -23,8 +24,8 @@ Diagnosis assesses acceptance criteria, reproducible development, behavioral ver
 | `--diagnosis-file <file>` | none | Offline replay, or resume saved questions with answers/interview / 오프라인 재생 또는 원본 질문 재개 |
 | `--output <file>` | stdout | Save report (JSON with `--json`, otherwise Markdown) / 보고서 저장 |
 | `--markdown` | off | Diagnosis output is already readable Markdown / 진단은 기본적으로 Markdown 출력 |
-| `--max-turns <number>` | `200` | Positive integer agent turn limit / 양의 정수 턴 제한 |
-| `--max-budget <number>` | `0.50` | Positive total analysis budget in USD / 전체 분석 예산 |
+| `--max-turns <number>` | `200` | Claude-only positive integer turn limit / Claude 전용 양의 정수 턴 제한 |
+| `--max-budget <number>` | `0.50` | Claude-only total budget in USD / Claude 전용 전체 분석 예산 |
 | `--timeout <number>` | `120` | Positive total deadline in seconds / 전체 제한 시간(초) |
 | `--verbose` | off | Diagnostic progress / 상세 진행 정보 |
 
@@ -57,6 +58,23 @@ Use a new external filename each time. Outputs must be outside the real target r
 
 매번 저장소 밖의 새 파일명을 사용하세요. 심볼릭 링크의 실제 경로까지 확인하여 대상 저장소 내부 저장을 차단합니다. 기존 파일을 덮어쓰지 않으며 상위 폴더가 존재해야 하고 보고서·스냅샷 경로는 달라야 합니다. 스냅샷·비교 기준·답변 입력은 최대 5MB의 일반 JSON 파일만 허용합니다.
 
+## Analysis engines / 분석 엔진
+
+```bash
+# Install/update Codex, then sign in using ChatGPT / Codex 설치·갱신 후 ChatGPT 로그인
+npm install -g @openai/codex@latest
+codex login
+vibe-ready . --diagnose --engine codex --provider none --save-diagnosis ../codex-baseline.json
+```
+
+Engine choice is CLI `--engine` → config `engine` → Claude. Diagnosis reads only the engine preference from the config; scoring categories and `agent` are not used. `--engine` is independent of the harness focus (`--agent`) and forge (`--provider`). The Codex integration uses the installed CLI (tested: 0.155.1), its saved login, read-only execution, and isolated configuration. No new npm dependency or API key is required. See the [official Codex authentication guide](https://learn.chatgpt.com/docs/auth).
+
+Codex rejects explicit `--max-budget` and `--max-turns` because it cannot enforce those Claude limits. The shared `--timeout` still applies; unreported Codex dollar cost is not treated as zero. Bare snapshot replay loads neither config nor an engine runtime. Resume defaults to the saved engine (missing means Claude), ignores the current config engine, and rejects a conflicting explicit override. Baselines must use the same engine.
+
+엔진 우선순위는 CLI `--engine` → 설정 `engine` → Claude입니다. 진단은 설정에서 엔진만 읽고 점수화 항목과 `agent`는 사용하지 않습니다. `--engine`은 평가 대상 하네스(`--agent`) 및 원격 제공자(`--provider`)와 독립적입니다. Codex는 설치된 CLI(검증 버전: 0.155.1)의 기존 인증으로 설정을 격리하여 읽기 전용으로 실행합니다. 새 npm 의존성이나 API 키가 필요하지 않습니다.
+
+Codex는 Claude의 달러 예산·턴 제한을 보장할 수 없으므로 명시한 `--max-budget`과 `--max-turns`를 거부합니다. 공통 `--timeout`은 적용하며 보고되지 않은 Codex 비용을 0으로 취급하지 않습니다. 단순 재생에서는 설정과 엔진 런타임을 읽지 않습니다. 재개 시 현재 설정 대신 저장된 엔진을 사용하고(정보가 없으면 Claude), 명시적으로 다른 엔진을 지정하면 거부합니다. 비교 기준도 같은 엔진이어야 합니다.
+
 ## Interview / 인터뷰
 
 Run once to obtain question IDs. Save answers as an object, for example:
@@ -76,18 +94,18 @@ Use the actual IDs shown in your saved report. File answers require that snapsho
 
 ## Evidence and interpretation / 근거와 해석
 
-- Remote access uses read-only GET requests with bounded pagination. GitHub accepts `GH_TOKEN` or `GITHUB_TOKEN`; GitLab accepts `GITLAB_TOKEN`. Missing credentials, permissions, and unavailable endpoints produce collection gaps; they are not proof of zero activity. `--provider none` skips remote APIs. Model authentication continues to use Claude Code.
+- Remote access uses read-only GET requests with bounded pagination. GitHub accepts `GH_TOKEN` or `GITHUB_TOKEN`; GitLab accepts `GITLAB_TOKEN`. Missing credentials, permissions, and unavailable endpoints produce collection gaps; they are not proof of zero activity. `--provider none` skips remote APIs. Authentication uses the selected engine’s existing Claude Code or Codex login.
 - PR/MR sampling uses update timestamps within the selected window. CI sampling and pagination are bounded. The report shows truncation, observed counts, and missing data; conclusions concern this sample.
 - GitHub CI uses creation timestamps; GitLab CI uses update timestamps. Failed job/step details and bounded PR/MR patches are sampled, but full CI logs are not downloaded. GitLab comments do not establish review-submission timestamps. Total remote evidence is capped at 500KB, with the complete remote collection below 1MB.
-- Auto profile detection recognizes common Node service dependencies, Node CLI/library manifests and dbt projects; otherwise it selects `general`. Use `--profile` for other stacks. The agent may read relevant source/test samples but does not execute repository commands. Grep is restricted to individual validated files.
+- Auto profile detection recognizes common Node service dependencies, Node CLI/library manifests and dbt projects; otherwise it selects `general`. Use `--profile` for other stacks. Claude's hooks restrict Read/Grep to validated individual files. Codex uses an OS read-only sandbox and instructions to inspect only relevant files without executing target code; it does not have equivalent path-scoped Read/Grep hooks.
 - If interview synthesis runs out of budget or fails, the first validated diagnosis and answers remain available with an explicit warning that the answers were not incorporated. Reopen the saved snapshot to retry.
 - PR creation-to-merge median uses only merged records with valid timestamps, with its sample count shown. It is not deployment lead time. Creation-to-first-review includes possible draft time and excludes unobserved reviews. CI failures use completed-run denominators; retries indicate observed attempts, not proven flakiness. CI does not establish deployment or incident outcomes.
 - Comparison requires the same schema, rubric, repository identity, profile, goal, and window duration. It matches stable capability IDs. A previous gap/partial is resolved only when the new finding is explicitly supported; missing, unknown, or not-applicable becomes unconfirmed. Window/sample changes are displayed. Before/after differences do not establish causality.
 
-- 원격 수집은 GET 요청과 제한된 페이지 탐색만 사용합니다. GitHub는 `GH_TOKEN` 또는 `GITHUB_TOKEN`, GitLab은 `GITLAB_TOKEN`을 받습니다. 인증·권한·엔드포인트 문제는 활동 0건의 증거가 아닌 수집 공백입니다. `--provider none`은 원격 API를 생략합니다. 모델 인증에는 계속 Claude Code를 사용합니다.
+- 원격 수집은 GET 요청과 제한된 페이지 탐색만 사용합니다. GitHub는 `GH_TOKEN` 또는 `GITHUB_TOKEN`, GitLab은 `GITLAB_TOKEN`을 받습니다. 인증·권한·엔드포인트 문제는 활동 0건의 증거가 아닌 수집 공백입니다. `--provider none`은 원격 API를 생략합니다. 모델 인증은 선택한 엔진의 기존 Claude Code 또는 Codex 로그인을 사용합니다.
 - PR/MR은 선택 기간의 갱신 시각을 기준으로 표본을 수집합니다. CI와 페이지 탐색에도 상한이 있습니다. 보고서에 잘림, 관찰 건수, 누락 자료를 표시하며 진단 범위는 해당 표본입니다.
 - GitHub CI는 생성 시각, GitLab CI는 갱신 시각 기준입니다. 실패 작업·단계와 제한된 PR/MR 패치를 수집하지만 CI 로그 전체는 다운로드하지 않습니다. GitLab 댓글만으로 리뷰 제출 시각을 확정하지 않습니다. 원격 근거는 500KB, 전체 원격 수집 결과는 1MB 이내로 제한합니다.
-- 자동 유형 감지는 일반적인 Node 서비스 의존성, Node CLI·라이브러리 설정과 dbt를 인식하며 나머지는 `general`을 사용합니다. 다른 기술 스택은 `--profile`로 지정하세요. 에이전트는 필요한 소스·테스트 표본을 읽되 저장소 명령을 실행하지 않습니다. Grep은 검증된 개별 파일만 검색합니다.
+- 자동 유형 감지는 일반적인 Node 서비스 의존성, Node CLI·라이브러리 설정과 dbt를 인식하며 나머지는 `general`을 사용합니다. 다른 기술 스택은 `--profile`로 지정하세요. Claude는 훅으로 Read/Grep을 검증된 개별 파일로 제한합니다. Codex는 OS 읽기 전용 샌드박스와 관련 파일만 조사하고 대상 코드를 실행하지 말라는 지시를 사용하며, Claude와 동일한 경로별 Read/Grep 훅은 없습니다.
 - 인터뷰 합성이 예산 소진 등으로 실패하면 최초 검증된 진단과 답변을 보존하고, 답변 미반영 사실을 수집 공백에 표시합니다. 저장한 스냅샷을 다시 열어 재시도할 수 있습니다.
 - 생성→병합 중앙값은 유효한 시각이 있는 병합 표본을 사용하고 분모를 표시합니다. 배포 리드타임이 아닙니다. 생성→첫 리뷰에는 초안 시간이 포함될 수 있고 관찰되지 않은 리뷰는 제외됩니다. CI 실패의 분모는 종료 실행이며 재시도는 불안정성을 확정하지 않습니다. CI만으로 배포나 장애 결과를 판단하지 않습니다.
 - 비교하려면 스키마·평가 기준·저장소 식별자·프로필·목표·기간 길이가 같아야 합니다. 안정적인 역량 ID로 대응시키며 기존 개선 필요/부분 충족이 새 진단에서 명시적으로 충족된 경우만 해결로 표시합니다. 누락·판단 불가·해당 없음은 해결 미확인입니다. 기간·표본 변화를 함께 표시하고 전후 차이를 인과관계로 단정하지 않습니다.

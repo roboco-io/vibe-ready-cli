@@ -6,6 +6,9 @@ import { validateAnswers, validateSnapshot } from "./validation.js";
 import { buildDiagnosisReport } from "./report.js";
 import { compareDiagnoses } from "./compare.js";
 import { redactValue } from "./redact.js";
+import { loadEngineConfig } from "../config.js";
+import { assertEngineLimits, parseEngine, resolveEngine } from "../engines/selection.js";
+import type { EngineId } from "../engines/types.js";
 import type { DiagnosisOptions, DiagnosisSnapshot } from "./types.js";
 
 type CliOptions = Record<string, string | boolean | undefined>;
@@ -79,6 +82,7 @@ const interview: NonNullable<DiagnosisOptions["interview"]> = async (questions, 
 };
 
 export async function runDiagnosisCli(repoPath: string, opts: CliOptions): Promise<void> {
+  const cliEngine = opts.engine === undefined ? undefined : parseEngine(opts.engine);
   for (const key of ["category", "branch", "pdf", "agent"]) {
     if (opts[key] !== undefined) throw new Error(`진단 모드에서는 --${key} 옵션을 사용할 수 없습니다.`);
   }
@@ -93,6 +97,17 @@ export async function runDiagnosisCli(repoPath: string, opts: CliOptions): Promi
     maxBudgetUsd: numeric(opts, "maxBudget", 0.5, Number.MAX_VALUE, false),
     timeoutMs: numeric(opts, "timeout", 120, 2_147_483, false) * 1000,
     verbose: opts.verbose === true, goal: option(opts, "goal"), remoteUrl: option(opts, "remoteUrl"),
+  };
+  const selectEngine = (engine: EngineId) => {
+    assertEngineLimits(engine, {
+      maxBudget: opts.maxBudgetExplicit === true || opts.maxBudgetExplicit !== false && opts.maxBudget !== undefined,
+      maxTurns: opts.maxTurnsExplicit === true || opts.maxTurnsExplicit !== false && opts.maxTurns !== undefined,
+    });
+    options.engine = engine;
+    if (engine === "codex") {
+      options.maxBudgetUsd = undefined;
+      options.maxTurns = undefined;
+    }
   };
   let repo: string;
   try { repo = realpathSync(repoPath); if (!statSync(repo).isDirectory()) throw new Error(); }
@@ -111,11 +126,16 @@ export async function runDiagnosisCli(repoPath: string, opts: CliOptions): Promi
   if (replay) {
     snapshot = validateSnapshot(readJson(replay));
     if (answerFile || options.interview) {
+      const savedEngine = snapshot.engine ?? "claude";
+      const engine = resolveEngine(cliEngine, undefined, savedEngine);
+      if (engine !== savedEngine) throw new Error("인터뷰 재개 시 저장된 분석 엔진을 변경할 수 없습니다.");
+      selectEngine(engine);
       const { resumeDiagnosis } = await import("./agent.js");
       snapshot = validateSnapshot(await resumeDiagnosis(repo, snapshot, options));
     }
   }
   else {
+    selectEngine(resolveEngine(cliEngine, cliEngine === undefined ? loadEngineConfig(repo) : undefined));
     const { diagnoseRepository } = await import("./agent.js");
     snapshot = validateSnapshot(await diagnoseRepository(repo, options));
   }

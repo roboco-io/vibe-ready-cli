@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import type { LLMAnalysisOutput } from "./types.js";
+import type { EngineId } from "./engines/types.js";
 
 const CACHE_DIR = ".vibe-ready";
 const CACHE_FILE = "cache.json";
@@ -9,7 +10,8 @@ const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24시간
 // 카테고리 스키마/프롬프트가 바뀌면 버전을 올려 이전 캐시를 무효화한다
 // v2: 이슈 트래킹 연동 카테고리 추가
 // v3: 하네스 엔지니어링 단일 에이전트 평가 + --agent 옵션
-export const CACHE_STORE_VERSION = 3;
+// v4: 분석 엔진별 캐시 분리
+export const CACHE_STORE_VERSION = 4;
 
 interface CacheEntry {
   repoPath: string;
@@ -79,14 +81,14 @@ function saveCache(repoPath: string, store: CacheStore): void {
   writeFileSync(getCachePath(repoPath), JSON.stringify(store, null, 2));
 }
 
-function cacheKey(repoPath: string, agent?: string | null): string {
+function cacheKey(repoPath: string, agent?: string | null, engine: EngineId = "claude"): string {
   const repoHash = computeRepoHash(repoPath);
-  return agent ? `${repoHash}:${agent}` : repoHash;
+  return `${repoHash}:${engine}:${agent ?? "auto"}`;
 }
 
-export function getCachedResult(repoPath: string, agent?: string | null): LLMAnalysisOutput | null {
+export function getCachedResult(repoPath: string, agent?: string | null, engine: EngineId = "claude"): LLMAnalysisOutput | null {
   const store = loadCache(repoPath);
-  const entry = store.entries[cacheKey(repoPath, agent)];
+  const entry = store.entries[cacheKey(repoPath, agent, engine)];
 
   if (!entry) return null;
 
@@ -96,9 +98,9 @@ export function getCachedResult(repoPath: string, agent?: string | null): LLMAna
   return entry.llmOutput;
 }
 
-export function setCachedResult(repoPath: string, llmOutput: LLMAnalysisOutput, agent?: string | null): void {
+export function setCachedResult(repoPath: string, llmOutput: LLMAnalysisOutput, agent?: string | null, engine: EngineId = "claude"): void {
   const store = loadCache(repoPath);
-  const key = cacheKey(repoPath, agent);
+  const key = cacheKey(repoPath, agent, engine);
 
   // 오래된 엔트리 정리
   const now = Date.now();
