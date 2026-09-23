@@ -45,6 +45,50 @@ describe("diagnosis CLI", () => {
     expect(data.comparison.unconfirmed).toEqual([]);
     expect(readdirSync(root).sort()).toEqual(["input.json", "repo"]);
   });
+  it("offline replay does not load an invalid engine config", async () => {
+    writeFileSync(join(repo, ".vibeready.json"), "invalid json");
+    await runDiagnosisCli(repo, { diagnosisFile: input, json: true });
+    expect(JSON.parse(vi.mocked(console.log).mock.calls.at(-1)![0]).schemaVersion).toBe(1);
+  });
+  it("applies CLI engine over config and suppresses implicit Claude limits for Codex", async () => {
+    const { diagnoseRepository } = await import("../../src/diagnosis/agent.js");
+    writeFileSync(join(repo, ".vibeready.json"), JSON.stringify({ engine: "claude", categories: "ignored" }));
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, { engine: "codex", maxBudget: "0.50", maxTurns: "200", maxBudgetExplicit: false, maxTurnsExplicit: false });
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]).toMatchObject({ engine: "codex", maxTurns: undefined, maxBudgetUsd: undefined });
+  });
+  it("maps --no-max-budget to an unlimited Claude budget and allows it with Codex", async () => {
+    const { diagnoseRepository } = await import("../../src/diagnosis/agent.js");
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, { maxBudget: false, maxBudgetExplicit: true });
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]?.maxBudgetUsd).toBe(Number.POSITIVE_INFINITY);
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, { engine: "codex", maxBudget: false, maxBudgetExplicit: true });
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]).toMatchObject({ engine: "codex", maxBudgetUsd: undefined });
+  });
+  it("uses configured engine or Claude by default", async () => {
+    const { diagnoseRepository } = await import("../../src/diagnosis/agent.js");
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, {});
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]?.engine).toBe("claude");
+    writeFileSync(join(repo, ".vibeready.json"), JSON.stringify({ engine: "codex" }));
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, {});
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]?.engine).toBe("codex");
+  });
+  it.each([{ engine: "wrong" }, { engine: "codex", maxBudget: "0.50" }, { engine: "codex", maxTurns: "200" }])("rejects invalid engine options before execution: %j", async options => {
+    await expect(runDiagnosisCli(repo, options)).rejects.toThrow(/engine|엔진|Codex|codex/);
+  });
+  it("resumes saved engine without loading config and rejects explicit engine changes", async () => {
+    const snapshot = { ...fixture(), engine: "codex" };
+    writeFileSync(input, JSON.stringify(snapshot));
+    writeFileSync(join(repo, ".vibeready.json"), "invalid json");
+    const answers = join(root, "answers.json"); writeFileSync(answers, JSON.stringify({ q1: "답변" }));
+    await runDiagnosisCli(repo, { diagnosisFile: input, answers });
+    const { resumeDiagnosis } = await import("../../src/diagnosis/agent.js");
+    expect(vi.mocked(resumeDiagnosis).mock.calls.at(-1)?.[2]?.engine).toBe("codex");
+    await expect(runDiagnosisCli(repo, { diagnosisFile: input, answers, engine: "claude" })).rejects.toThrow(/엔진|engine/);
+  });
   it("resumes original saved questions with file answers", async () => {
     const answers = join(root, "answers.json");
     writeFileSync(answers, JSON.stringify({ q1: "기존 질문에 대한 답변" }));

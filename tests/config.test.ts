@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadConfig, getEffectiveWeights } from "../src/config.js";
+import { loadConfig, loadEngineConfig, getEffectiveCategories, getEffectiveWeights } from "../src/config.js";
 
 let dir: string;
 
@@ -17,6 +17,29 @@ afterEach(() => {
 function writeConfig(obj: unknown): void {
   writeFileSync(join(dir, ".vibeready.json"), JSON.stringify(obj), "utf-8");
 }
+
+describe("분석 엔진 설정", () => {
+  it("엔진만 설정하면 기본 평가 항목을 상속한다", () => {
+    writeConfig({ engine: "codex" });
+    expect(loadConfig(dir)?.engine).toBe("codex");
+    expect(loadConfig(dir)?.categories).toEqual(getEffectiveCategories(null));
+  });
+  it("진단은 기존 점수화 항목을 검증하지 않고 엔진만 읽는다", () => {
+    writeConfig({ engine: "codex", categories: "legacy invalid", agent: "invalid" });
+    expect(loadEngineConfig(dir)).toBe("codex");
+    expect(() => loadConfig(dir)).toThrow();
+  });
+  it.each(["auto", "CODEX", "other", null, 7])("잘못된 엔진 %j를 거부한다", engine => {
+    writeConfig({ engine });
+    expect(() => loadConfig(dir)).toThrow(/engine|엔진/);
+    expect(() => loadEngineConfig(dir)).toThrow(/engine|엔진/);
+  });
+  it("설정이나 엔진이 없으면 진단 기본 선택에 위임한다", () => {
+    expect(loadEngineConfig(dir)).toBeUndefined();
+    writeConfig({ categories: "ignored" });
+    expect(loadEngineConfig(dir)).toBeUndefined();
+  });
+});
 
 describe("optional 카테고리 설정", () => {
   it("optional 카테고리는 bonusCap이 필요하다", () => {

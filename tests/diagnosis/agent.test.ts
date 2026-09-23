@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+vi.mock("@anthropic-ai/claude-agent-sdk", () => ({ query: () => { throw new Error("Unexpected live Claude query in test"); } }));
 import { mkdtempSync, writeFileSync, rmSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -17,6 +18,28 @@ async function withRepo(fn: (path: string) => Promise<void>) {
   try { await fn(root); } finally { rmSync(root, { recursive: true, force: true }); }
 }
 describe("diagnosis investigation", () => {
+  it("uses Codex for both investigation and interview without fabricating a dollar cost", async () => {
+    await withRepo(async root => {
+      let calls = 0;
+      const snapshot = await diagnoseRepository(root, { engine: "codex", interview: async () => ({ q1: "PR마다 실행" }) }, {
+        collect: async () => remote,
+        query: async function* () { throw new Error("wrong engine"); },
+        codexRun: async () => { calls++; return { engine: "codex", output: { ...result(), summary: calls === 2 ? "Codex 인터뷰 반영" : "Codex 최초 조사" } }; },
+      });
+      expect(calls).toBe(2);
+      expect(snapshot.engine).toBe("codex");
+      expect(snapshot.diagnosis.summary).toBe("Codex 인터뷰 반영");
+    });
+  });
+  it("resumes a saved Codex engine and refuses a conflicting override", async () => {
+    await withRepo(async root => {
+      const codexRun = async () => ({ engine: "codex" as const, output: result() });
+      const initial = await diagnoseRepository(root, { engine: "codex" }, { collect: async () => remote, codexRun });
+      const resumed = await resumeDiagnosis(root, initial, { answers: { q1: "검증" } }, { codexRun });
+      expect(resumed.engine).toBe("codex");
+      await expect(resumeDiagnosis(root, initial, { engine: "claude", answers: { q1: "검증" } }, { codexRun })).rejects.toThrow(/엔진/);
+    });
+  });
   it("blocks directory-wide Grep and secret files while permitting structured response delivery", async () => {
     await withRepo(async root => {
       writeFileSync(join(root, ".env"), "SECRET=private\n");
@@ -69,6 +92,26 @@ describe("diagnosis investigation", () => {
       expect(snapshot.answers.q1).toBe("PR마다 실행합니다");
       expect(snapshot.diagnosis.summary).toBe("팀 답변 반영");
       expect(snapshot.evidence.find(e => e.id === "interview:q1")?.summary).toContain("PR마다");
+    });
+  });
+  it("reports the user's total budget when a later pass exceeds the remaining budget", async () => {
+    await withRepo(async root => {
+      let calls = 0;
+      const query: QueryRunner = async function* () {
+        calls++;
+        if (calls === 1) yield { type: "result", subtype: "success", structured_output: result(), total_cost_usd: 1.85, num_turns: 1 };
+        else yield { type: "result", subtype: "error_max_budget_usd", total_cost_usd: 0.16, num_turns: 3 };
+      };
+      const snapshot = await diagnoseRepository(root, { maxBudgetUsd: 2, interview: async () => ({ q1: "답변" }) }, { query, collect: async () => remote });
+      expect(snapshot.remote.gaps.join(" ")).toContain("사용: $2.01 / 한도: $2.00, 3턴). --max-budget 4.50 이상");
+    });
+  });
+  it("keeps an unlimited budget when the SDK omits cost", async () => {
+    await withRepo(async root => {
+      const budgets: (number | undefined)[] = [];
+      const query: QueryRunner = async function* (args) { budgets.push(args.options?.maxBudgetUsd); yield { type: "result", subtype: "success", structured_output: result(), num_turns: 1 }; };
+      await diagnoseRepository(root, { maxBudgetUsd: Number.POSITIVE_INFINITY, interview: async () => ({ q1: "답변" }) }, { query, collect: async () => remote });
+      expect(budgets).toEqual([undefined, undefined]);
     });
   });
   it("does not start another paid query after budget exhaustion", async () => {

@@ -1,5 +1,6 @@
 import { getChecks, PROFILES, readRepositoryFile } from "./rubric.js";
 import { redactText } from "./redact.js";
+import { parseEngine } from "../engines/selection.js";
 import type { CodeEvidence, DiagnosisOutput, DiagnosisSnapshot, Evidence, Finding, Profile } from "./types.js";
 
 const STATUSES = ["supported", "partial", "gap", "unknown", "not-applicable"];
@@ -80,6 +81,7 @@ export function validateAnswers(raw: unknown): Record<string, string> {
 
 export function validateSnapshot(raw: unknown): DiagnosisSnapshot {
   const s = object(raw, "진단 스냅샷");
+  const engine = s.engine === undefined ? "claude" : parseEngine(s.engine);
   if (s.schemaVersion !== 1) throw new Error("지원하지 않는 진단 스냅샷 버전입니다");
   for (const key of ["rubricVersion", "repository", "repoPath", "goal", "createdAt"]) string(s[key], `스냅샷 ${key}`);
   if (!PROFILES.includes(s.profile as Profile)) throw new Error("스냅샷 프로필이 올바르지 않습니다");
@@ -108,5 +110,5 @@ export function validateSnapshot(raw: unknown): DiagnosisSnapshot {
   array(remote.pullRequests, "PR 기록"); array(remote.ciRuns, "CI 기록"); array(remote.evidence, "원격 근거", 5000);
   const diagnosis = validateDiagnosisOutput(s.diagnosis, evidence, s.profile as Profile);
   const answers = validateAnswers(s.answers);
-  return { ...s, evidence, diagnosis, answers } as unknown as DiagnosisSnapshot;
+  return { ...s, engine, evidence, diagnosis, answers } as unknown as DiagnosisSnapshot;
 }

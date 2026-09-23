@@ -1,15 +1,18 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
 import { buildAnalysisPrompt } from "./prompts/analyze.js";
-import type { LLMAnalysisOutput } from "./types.js";
+import { ANALYSIS_JSON_SCHEMA, type LLMAnalysisOutput } from "./types.js";
 import type { CategoryConfig } from "./config.js";
 import type { GitLogContext } from "./git-log.js";
 import type { AgentId } from "./agents.js";
+import type { EngineDependencies, EngineId } from "./engines/types.js";
+import { runAnalysisEngine } from "./engines/run.js";
+import { assertEngineLimits, DEFAULT_MAX_BUDGET_USD, resolveEngine } from "./engines/selection.js";
 
 export const DEFAULT_MAX_TURNS = 200;
-export const DEFAULT_MAX_BUDGET_USD = 0.50;
+export { DEFAULT_MAX_BUDGET_USD };
 export const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface AnalyzerOptions {
+  engine?: EngineId;
   maxTurns?: number;
   maxBudgetUsd?: number;
   timeoutMs?: number;
@@ -20,120 +23,32 @@ export interface AnalyzerOptions {
   agent?: AgentId | null;
 }
 
-export async function analyzeRepository(
-  repoPath: string,
-  options: AnalyzerOptions = {},
-): Promise<LLMAnalysisOutput> {
-  const {
-    maxTurns = DEFAULT_MAX_TURNS,
-    maxBudgetUsd = DEFAULT_MAX_BUDGET_USD,
-    timeoutMs = DEFAULT_TIMEOUT_MS,
-    verbose = false,
-    categories,
-    customCategories,
-    gitLogContext,
-    agent,
-  } = options;
-
-  if (verbose) {
-    process.stderr.write(`[config] maxTurns=${maxTurns}, maxBudgetUsd=${maxBudgetUsd}, timeout=${timeoutMs}ms\n`);
-  }
-
-  const abortController = new AbortController();
-  const timeout = setTimeout(() => abortController.abort(), timeoutMs);
-
-  try {
-    const prompt = buildAnalysisPrompt(categories, customCategories, gitLogContext, agent);
-
-    let resultText: string | null = null;
-    let structuredOutput: unknown = null;
-
-    for await (const message of query({
-      prompt,
-      options: {
-        cwd: repoPath,
-        tools: ["Read", "Glob", "Grep"],
-        allowedTools: ["Read", "Glob", "Grep"],
-        permissionMode: "dontAsk",
-        maxTurns,
-        maxBudgetUsd,
-        abortController,
-      },
-    })) {
-      if (verbose && "type" in message) {
-        const msg = message as Record<string, unknown>;
-        if (msg.type === "assistant") {
-          process.stderr.write(".");
-        }
-      }
-
-      if ("type" in message && message.type === "result") {
-        const resultMsg = message as Record<string, unknown>;
-
-        if (verbose) {
-          process.stderr.write(`\n[result:${String(resultMsg.subtype)}]\n`);
-        }
-
-        if (resultMsg.structured_output) {
-          structuredOutput = resultMsg.structured_output;
-        }
-        if (typeof resultMsg.result === "string") {
-          resultText = resultMsg.result;
-        }
-
-        if (!structuredOutput && !resultText && resultMsg.subtype !== "success") {
-          if (resultMsg.subtype === "error_max_turns") {
-            throw new Error("LLM 에이전트가 최대 턴 수에 도달했습니다. --max-turns 값을 늘려보세요.");
-          }
-          if (resultMsg.subtype === "error_max_budget_usd") {
-            throw new Error("분석 비용이 예산을 초과했습니다. --max-budget 값을 늘려보세요.");
-          }
-        }
-      }
-    }
-
-    // structured_output 우선, 없으면 result 텍스트에서 JSON 추출
-    if (structuredOutput) {
-      return structuredOutput as LLMAnalysisOutput;
-    }
-
-    if (resultText) {
-      return parseJsonFromText(resultText);
-    }
-
-    throw new Error("LLM이 분석 결과를 반환하지 않았습니다.");
-  } finally {
-    clearTimeout(timeout);
-  }
+function validOutput(value: unknown): value is LLMAnalysisOutput {
+  const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+  return obj(value) && typeof value.summary === "string" && Array.isArray(value.categories) && value.categories.length > 0 && value.categories.every(cat =>
+    obj(cat) && typeof cat.name === "string" && ["must", "nice", "optional"].includes(String(cat.tier)) &&
+    typeof cat.score === "number" && Number.isFinite(cat.score) && cat.score >= 0 && cat.score <= 100 &&
+    Array.isArray(cat.recommendations) && cat.recommendations.every(r => obj(r) && ["critical", "warning", "info"].includes(String(r.severity)) && typeof r.message === "string" && typeof r.action === "string") &&
+    Array.isArray(cat.rawFindings) && cat.rawFindings.every(f => obj(f) && typeof f.item === "string" && typeof f.found === "boolean" && typeof f.details === "string"));
 }
 
-function parseJsonFromText(text: string): LLMAnalysisOutput {
-  // 직접 JSON 파싱 시도
+export async function analyzeRepository(repoPath: string, options: AnalyzerOptions = {}, dependencies: EngineDependencies = {}): Promise<LLMAnalysisOutput> {
+  const engine = resolveEngine(options.engine);
+  assertEngineLimits(engine, { maxBudget: options.maxBudgetUsd !== undefined, maxTurns: options.maxTurns !== undefined });
+  const maxTurns = options.maxTurns ?? DEFAULT_MAX_TURNS;
+  const maxBudgetUsd = options.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD;
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  if (!Number.isInteger(maxTurns) || maxTurns <= 0 || Number.isNaN(maxBudgetUsd) || maxBudgetUsd <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("분석 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
+  const abortController = new AbortController();
+  const timer = setTimeout(() => abortController.abort(), timeoutMs);
   try {
-    return JSON.parse(text) as LLMAnalysisOutput;
-  } catch {
-    // JSON이 마크다운 코드 블록 안에 있을 수 있음
-  }
-
-  // ```json ... ``` 블록에서 추출
-  const jsonBlockMatch = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-  if (jsonBlockMatch?.[1]) {
-    try {
-      return JSON.parse(jsonBlockMatch[1]) as LLMAnalysisOutput;
-    } catch {
-      // 파싱 실패 시 다음 시도
-    }
-  }
-
-  // { 로 시작하는 가장 큰 JSON 블록 추출
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch?.[0]) {
-    try {
-      return JSON.parse(jsonMatch[0]) as LLMAnalysisOutput;
-    } catch {
-      // 최종 실패
-    }
-  }
-
-  throw new Error("LLM 응답에서 JSON을 추출할 수 없습니다. 다시 시도해주세요.");
+    const result = await runAnalysisEngine(engine, {
+      repoPath, prompt: buildAnalysisPrompt(options.categories, options.customCategories, options.gitLogContext, options.agent),
+      schema: ANALYSIS_JSON_SCHEMA, abortController, verbose: options.verbose,
+      maxTurns: engine === "claude" ? maxTurns : undefined,
+      maxBudgetUsd: engine === "claude" ? maxBudgetUsd : undefined,
+    }, dependencies);
+    if (!validOutput(result.output)) throw new Error("분석 결과가 올바른 카테고리·점수·권고 형식이 아닙니다");
+    return result.output;
+  } finally { clearTimeout(timer); }
 }

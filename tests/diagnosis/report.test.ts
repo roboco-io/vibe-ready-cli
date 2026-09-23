@@ -17,6 +17,14 @@ function snapshot(findings: Finding[] = [finding("acceptance", "gap")]): Diagnos
 }
 
 describe("diagnosis report", () => {
+  it("shows saved engine provenance and treats legacy snapshots as Claude", () => {
+    const legacy = snapshot();
+    const codex = { ...snapshot(), engine: "codex" as const };
+    expect(buildDiagnosisReport(legacy)).toContain("Claude Agent SDK");
+    expect(buildDiagnosisReport(codex)).toContain("Codex CLI");
+    expect(() => compareDiagnoses(legacy, codex)).toThrow(/엔진/);
+    expect(() => compareDiagnoses(legacy, { ...legacy, engine: "claude" })).not.toThrow();
+  });
   it("renders scope, denominators, evidence, questions and actionable findings", () => {
     const text = buildDiagnosisReport(snapshot());
     for (const part of ["개선 여지", "cli", "피드백 단축", "2026-08-21", "30", "표본", "잘림", "리뷰 권한 부족", "2/3", "0/5", "1/3", "2/4", "초안 시간 포함 가능", "https://github.com/org/repo/pull/1", "src/main.ts:8", "return true;", "interview:q1", "가설", "실험 실행", "완료 기준", "측정 기준", "언제 점검하나요?", "매주 점검합니다"])

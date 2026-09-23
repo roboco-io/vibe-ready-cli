@@ -11,7 +11,7 @@
 
 A CLI tool that analyzes how ready a repository is for vibe coding (AI agent-based development).
 
-Using the Claude Agent SDK, an LLM directly explores the repository, scores it across 7 categories, and provides an overall grade along with specific improvement recommendations. Commit-log stats (issue reference rate, PR workflow patterns) are pre-extracted and injected into the analysis prompt before the LLM call.
+Using Claude Agent SDK or Codex CLI, an LLM directly explores the repository, scores it across 7 categories, and provides an overall grade along with specific improvement recommendations. Commit-log stats (issue reference rate, PR workflow patterns) are pre-extracted and injected into the analysis prompt before the LLM call.
 
 ## Installation & Usage
 
@@ -26,7 +26,7 @@ vibe-ready . --diagnose --goal "Shorten feedback cycles" --baseline ../diagnosis
 vibe-ready . --diagnosis-file ../diagnosis.json --json
 ```
 
-The default window is 30 days with at most 30 PR/MRs and 30 CI runs. Remote reads use `GH_TOKEN`/`GITHUB_TOKEN` or `GITLAB_TOKEN`; missing access appears as a collection gap. `--provider none` disables remote API collection but still uses the Claude Agent SDK. Snapshot replay (`--diagnosis-file`) needs no model or network access. Target repositories are read-only: output files must be outside the target, use new filenames, and have an existing parent directory. Nothing is saved implicitly.
+The default window is 30 days with at most 30 PR/MRs and 30 CI runs. Remote reads use `GH_TOKEN`/`GITHUB_TOKEN` or `GITLAB_TOKEN`; missing access appears as a collection gap. `--provider none` disables remote API collection but still calls the selected analysis engine. Snapshot replay (`--diagnosis-file`) needs no model or network access. Target repositories are read-only: output files must be outside the target, use new filenames, and have an existing parent directory. Nothing is saved implicitly.
 
 To answer saved questions, use `--diagnosis-file ../diagnosis.json --answers ../answers.json` (calls the model and requires the original repository/commit). See [diagnosis options, interview format, and metric limitations](docs/process-diagnosis.md).
 
@@ -47,7 +47,20 @@ vibe-ready . --pdf report.pdf
 vibe-ready . --category "하네스 엔지니어링"
 ```
 
-> **Prerequisite**: [Claude Code](https://claude.ai/code) must be installed and authenticated. The Claude Agent SDK uses your Claude Code subscription — no separate API key required.
+> **Prerequisite**: The default Claude engine requires authenticated [Claude Code](https://claude.ai/code). For Codex, install the latest CLI and sign in with ChatGPT; existing Codex authentication is reused ([official authentication guide](https://learn.chatgpt.com/docs/auth)). No extra npm dependency or separate API key is required by this integration.
+
+### Select an analysis engine
+
+```bash
+npm install -g @openai/codex@latest
+codex login
+vibe-ready . --engine codex
+vibe-ready . --diagnose --engine codex --provider none --timeout 180
+```
+
+`--engine claude|codex` selects who performs the analysis. `--agent` still selects the coding-agent harness being evaluated; `--provider` still selects GitHub/GitLab evidence. Selection order is CLI → config `engine` → `claude`. For a persistent default, `.vibeready.json` may contain only `{"engine":"codex"}`; default scoring categories are inherited.
+
+Codex CLI 0.155.1 is the tested integration version. It runs `codex exec` with a read-only sandbox and isolated configuration. Explicit `--max-budget` and `--max-turns` are Claude-only and rejected for Codex; their displayed Claude defaults are not Codex limits. `--timeout` works with both engines. Scoring caches are separated by engine. Diagnosis snapshots preserve the engine, resume with that engine, and reject cross-engine baselines. Older snapshots without an engine mean Claude. Plain snapshot replay needs neither CLI installed.
 
 ### For Developers (from source)
 
@@ -71,6 +84,7 @@ npm test
 | Option | Default | Description |
 |--------|---------|-------------|
 | `[path]` | `.` | Path to the repository to analyze |
+| `--engine <engine>` | `claude` | Analysis engine (`claude` or `codex`); overrides config |
 | `-v, --verbose` | - | Show detailed analysis findings |
 | `-m, --markdown` | - | Output in Markdown format |
 | `-c, --category <names>` | all | Analyze specific categories only (comma-separated) |
@@ -79,8 +93,9 @@ npm test
 | `-o, --output <file>` | - | Save report to file (.md extension auto-detected) |
 | `--pdf <file>` | - | Export report as PDF (requires pandoc + xelatex) |
 | `--no-cache` | - | Skip cache and force fresh analysis |
-| `--max-turns <n>` | `200` | Max LLM agent turns |
-| `--max-budget <n>` | `0.50` | Max budget in USD per analysis |
+| `--max-turns <n>` | `200` | Claude-only agent turn limit |
+| `--max-budget <n>` | `2.00` | Claude-only budget in USD |
+| `--no-max-budget` | - | Run Claude without a budget cap |
 | `--timeout <n>` | `120` | Timeout in seconds |
 
 ## Architecture
@@ -194,14 +209,15 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
 |--------|---------|-------------|
 | `[path]` | `.` | Path to the repository to analyze |
 | `-v, --verbose` | - | Show detailed analysis results (rawFindings) |
-| `--max-turns <n>` | `200` | Maximum number of LLM agent turns |
-| `--max-budget <n>` | `0.50` | Maximum cost per analysis run (USD) |
+| `--max-turns <n>` | `200` | Claude-only maximum agent turns |
+| `--max-budget <n>` | `2.00` | Claude-only maximum cost (USD) |
+| `--no-max-budget` | - | Run Claude without a budget cap |
 | `--timeout <n>` | `120` | Timeout (seconds) |
 
 ## Known Limitations
 
 - **LLM non-determinism**: Repeated analysis of the same repo may vary by ±5–10 points
-- **Estimated cost**: Approximately $0.10–0.50 per analysis run (varies by repo size)
+- **Estimated cost**: Varies with repo size; large repositories can exceed $0.50 per run. When the budget is exceeded, the error shows the spent cost and a suggested `--max-budget` value. With Claude Code subscription auth, this is an estimated API-price cost, not a separate charge
 - **Read-Only analysis**: The target repository is never modified
 - **MVP limitations**: Currently supports single repo + terminal output only. JSON/HTML output and batch analysis are planned for future versions
 
@@ -235,13 +251,13 @@ This project applies **harness engineering** so that AI agents (such as Claude C
 
 | File | Role |
 |------|------|
-| `CLAUDE.md` | Core context for agents to understand the project — tech stack, build commands, architecture, data flow, scoring rules, coding conventions |
-| `AGENTS.md` | Agent working guidelines — module structure, test/commit rules, extension points, prohibited actions |
+| `AGENTS.md` | Single source of agent instructions — tech stack, build commands, architecture, data flow, scoring rules, coding/test/commit conventions, extension points, prohibited actions |
+| `CLAUDE.md` | Imports `AGENTS.md` (`@AGENTS.md`) so Claude Code loads the same instructions |
 | `.claude/settings.json` | Agent permissions and hook configuration — allowed tools, PreCommit auto-validation (build+test) |
 
 ### Design Principles
 
-- **Immediately graspable context**: `CLAUDE.md` is written so agents can understand the project structure, build process, and architecture on their first turn
+- **Immediately graspable context**: `AGENTS.md` is written so agents can understand the project structure, build process, and architecture on their first turn; keeping one file avoids drift between Claude Code and Codex instructions
 - **Safe autonomous operation**: `.claude/settings.json` auto-allows only read tools and build/test commands, enabling agents to explore and verify autonomously without destructive behavior
 - **Pre-commit auto-validation**: A PreCommit hook enforces `npm run build && npm test`, preventing agents from committing broken code
 - **Built-in extension guide**: `AGENTS.md` specifies how to add new check modules, output formats, CI gate modes, and more, so agents can add features following consistent patterns

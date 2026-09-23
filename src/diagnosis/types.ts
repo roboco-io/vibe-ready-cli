@@ -1,3 +1,5 @@
+import type { EngineId } from "../engines/types.js";
+
 export type Provider = "github" | "gitlab" | "none";
 export type Profile = "service" | "library" | "cli" | "data" | "general";
 export type FindingStatus = "supported" | "partial" | "gap" | "unknown" | "not-applicable";
@@ -92,6 +94,8 @@ export interface DiagnosisMetrics {
   retriedCiRuns: number;
 }
 export interface DiagnosisSnapshot {
+  /** Snapshots created before engine selection implicitly used Claude. */
+  engine?: EngineId;
   schemaVersion: 1;
   rubricVersion: string;
   createdAt: string;
@@ -116,6 +120,7 @@ export interface DiagnosisComparison {
 }
 
 export interface DiagnosisOptions {
+  engine?: EngineId;
   provider?: Provider | "auto";
   remoteUrl?: string;
   days?: number;

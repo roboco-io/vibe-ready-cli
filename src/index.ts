@@ -24,6 +24,8 @@ import type { BranchResult } from "./types.js";
 import type { VibeReadyConfig } from "./config.js";
 import type { AgentId } from "./agents.js";
 import { runDiagnosisCli } from "./diagnosis/cli.js";
+import { assertEngineLimits, resolveEngine } from "./engines/selection.js";
+import type { EngineId } from "./engines/types.js";
 
 const program = new Command();
 
@@ -36,12 +38,14 @@ program
   .option("-m, --markdown", "Output in Markdown format")
   .option("-c, --category <names>", "Analyze specific categories only (comma-separated)")
   .option("--agent <tool>", "Limit harness evaluation to one coding agent (claude|codex|cursor|copilot). Default: auto-detect")
+  .option("--engine <engine>", "Analysis engine: claude|codex (default: config or claude)")
   .option("-b, --branch <branches>", "Analyze specific branches (comma-separated)")
   .option("--no-cache", "Skip cache and force fresh analysis")
   .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
   .option("--pdf <file>", "Export report as PDF (requires pandoc + xelatex)")
-  .option("--max-turns <number>", "Max LLM agent turns", "200")
-  .option("--max-budget <number>", "Max budget in USD per analysis", "0.50")
+  .option("--max-turns <number>", "Claude-only maximum agent turns", "200")
+  .option("--max-budget <number>", "Claude-only maximum budget in USD", "2.00")
+  .option("--no-max-budget", "Run Claude without a budget cap")
   .option("--timeout <number>", "Timeout in seconds", "120")
   .option("--diagnose", "Diagnose the development process using repository and remote evidence")
   .option("--provider <provider>", "Diagnosis provider: auto|github|gitlab|none", "auto")
@@ -60,7 +64,7 @@ program
     const repoPath = resolve(path);
 
     if (opts.diagnose === true || typeof opts.diagnosisFile === "string") {
-      await runDiagnosisCli(repoPath, opts);
+      await runDiagnosisCli(repoPath, { ...opts, maxBudgetExplicit: program.getOptionValueSource("maxBudget") === "cli", maxTurnsExplicit: program.getOptionValueSource("maxTurns") === "cli" });
       return;
     }
     for (const key of ["provider", "remoteUrl", "days", "limit", "profile", "goal", "answers", "interview", "json", "saveDiagnosis", "baseline"]) {
@@ -96,6 +100,8 @@ program
 
     // 설정 파일 로드
     const config = loadConfig(repoPath);
+    const engine = resolveEngine(opts.engine, config?.engine);
+    assertEngineLimits(engine, { maxBudget: program.getOptionValueSource("maxBudget") === "cli" && opts.maxBudget !== false, maxTurns: program.getOptionValueSource("maxTurns") === "cli" });
     if (config && verbose) {
       process.stderr.write(`설정 파일 감지: ${config.categories.length}개 카테고리\n`);
     }
@@ -123,8 +129,9 @@ program
     }
 
     const analyzerOpts = {
-      maxTurns: Number(opts.maxTurns),
-      maxBudgetUsd: Number(opts.maxBudget),
+      engine,
+      maxTurns: engine === "claude" ? Number(opts.maxTurns) : undefined,
+      maxBudgetUsd: engine === "claude" ? (opts.maxBudget === false ? Number.POSITIVE_INFINITY : Number(opts.maxBudget)) : undefined,
       timeoutMs: Number(opts.timeout) * 1000,
       verbose,
       categories,
@@ -154,7 +161,7 @@ program
 
 async function handleSingleBranch(
   repoPath: string,
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
+  analyzerOpts: { engine: EngineId; maxTurns?: number; maxBudgetUsd?: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
   customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
@@ -164,24 +171,24 @@ async function handleSingleBranch(
   if (verbose) process.stderr.write("분석 중");
 
   const agent = analyzerOpts.agent ?? null;
-  let llmOutput = useCache ? getCachedResult(repoPath, agent) : null;
+  let llmOutput = useCache ? getCachedResult(repoPath, agent, analyzerOpts.engine) : null;
 
   if (llmOutput) {
     if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
   } else {
     const gitLogContext = collectGitLogContext(repoPath, verbose);
     llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
-    if (useCache) setCachedResult(repoPath, llmOutput, agent);
+    if (useCache) setCachedResult(repoPath, llmOutput, agent, analyzerOpts.engine);
   }
 
-  const result = computeResult(llmOutput, customWeights);
+  const result = { ...computeResult(llmOutput, customWeights), engine: analyzerOpts.engine };
   outputResult(result, null, repoPath, verbose, opts);
 }
 
 async function handleMultiBranch(
   repoPath: string,
   branches: string[],
-  analyzerOpts: { maxTurns: number; maxBudgetUsd: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
+  analyzerOpts: { engine: EngineId; maxTurns?: number; maxBudgetUsd?: number; timeoutMs: number; verbose: boolean; categories?: string[]; customCategories?: import("./config.js").CategoryConfig[]; agent?: AgentId | null },
   useCache: boolean,
   opts: Record<string, string | boolean | undefined>,
   customWeights?: Record<string, { tier: import("./types.js").CategoryTier; weight: number }>,
@@ -214,19 +221,19 @@ async function handleMultiBranch(
       if (verbose) process.stderr.write("분석 중");
 
       const agent = analyzerOpts.agent ?? null;
-      let llmOutput = useCache ? getCachedResult(repoPath, agent) : null;
+      let llmOutput = useCache ? getCachedResult(repoPath, agent, analyzerOpts.engine) : null;
 
       if (llmOutput) {
         if (verbose) process.stderr.write("캐시된 결과를 사용합니다.\n");
       } else {
         const gitLogContext = collectGitLogContext(repoPath, verbose);
         llmOutput = await analyzeRepository(repoPath, { ...analyzerOpts, gitLogContext });
-        if (useCache) setCachedResult(repoPath, llmOutput, agent);
+        if (useCache) setCachedResult(repoPath, llmOutput, agent, analyzerOpts.engine);
       }
 
       branchResults.push({
         branch,
-        result: computeResult(llmOutput, customWeights),
+        result: { ...computeResult(llmOutput, customWeights), engine: analyzerOpts.engine },
       });
     }
   } finally {

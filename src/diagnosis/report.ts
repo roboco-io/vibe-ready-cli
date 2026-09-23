@@ -37,6 +37,7 @@ export function buildDiagnosisReport(snapshot: DiagnosisSnapshot, comparison?: D
   const lines = ["# 개발 프로세스 진단", "", safe(d.summary), "", "## 관찰 범위", "",
     `- 저장소: ${safe(snapshot.repository)} / 커밋: ${safe(snapshot.commit ?? "알 수 없음")}`,
     `- 프로필: ${safe(snapshot.profile)} / 목표: ${safe(snapshot.goal)}`,
+    `- 분석 엔진: ${snapshot.engine === "codex" ? "Codex CLI" : "Claude Agent SDK"}`,
     `- 기간: ${safe(w.since)} ~ ${safe(w.until)} (${w.days}일), 수집 상한: 각 ${w.limit}개`,
     `- 제공자: ${safe(snapshot.remote.provider)} / 표본: PR/MR ${m.pullRequests}개, CI ${m.ciRuns}개 / 잘림: ${snapshot.remote.truncated ? "있음" : "없음"}`,
     "- 관찰 기간 기준: PR/MR 갱신 시각, GitHub CI 생성 시각, GitLab CI 갱신 시각. 제한된 표본을 조직 전체의 성과로 일반화하지 않습니다.",
