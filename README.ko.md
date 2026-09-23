@@ -93,7 +93,8 @@ npm test
 | `--pdf <file>` | - | PDF 내보내기 (pandoc + xelatex 필요) |
 | `--no-cache` | - | 캐시 무시, 새 분석 강제 |
 | `--max-turns <n>` | `200` | Claude 전용 최대 턴 수 |
-| `--max-budget <n>` | `0.50` | Claude 전용 최대 비용 (USD) |
+| `--max-budget <n>` | `2.00` | Claude 전용 최대 비용 (USD) |
+| `--no-max-budget` | - | Claude 예산 상한 없이 실행 |
 | `--timeout <n>` | `120` | 타임아웃 (초) |
 
 ## 아키텍처
@@ -206,13 +207,14 @@ npm test
 | `[path]` | `.` | 분석할 리포지토리 경로 |
 | `-v, --verbose` | - | 상세 분석 결과 (rawFindings) 표시 |
 | `--max-turns <n>` | `200` | Claude 전용 최대 턴 수 |
-| `--max-budget <n>` | `0.50` | Claude 전용 최대 비용 (USD) |
+| `--max-budget <n>` | `2.00` | Claude 전용 최대 비용 (USD) |
+| `--no-max-budget` | - | Claude 예산 상한 없이 실행 |
 | `--timeout <n>` | `120` | 타임아웃 (초) |
 
 ## Known Limitations
 
-- **LLM 비결정론성**: 동일 리포를 반복 분석하면 ±5~10점 변동이 있을 수 있습니다
-- **예상 비용**: 분석 1회당 약 $0.10~0.50 (리포 크기에 따라 다름)
+- **LLM 비결정론성**: 동일 리포를 반복 분석하면 ±5-10점 변동이 있을 수 있습니다
+- **예상 비용**: 리포 크기에 따라 다르며, 큰 리포는 1회에 $0.50을 넘을 수 있습니다. 예산을 초과하면 에러 메시지에 사용액과 권장 `--max-budget` 값이 표시됩니다. Claude Code 구독 인증 사용 시 이 금액은 API 단가 기준 추정치이며 별도로 청구되지 않습니다
 - **Read-Only 분석**: 대상 리포지토리를 절대 수정하지 않습니다
 - **MVP 제한**: 현재 단일 리포 + 터미널 출력만 지원. JSON/HTML 출력, 일괄 점검은 후속 버전 예정
 

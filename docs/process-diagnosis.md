@@ -25,7 +25,8 @@ Diagnosis assesses acceptance criteria, reproducible development, behavioral ver
 | `--output <file>` | stdout | Save report (JSON with `--json`, otherwise Markdown) / 보고서 저장 |
 | `--markdown` | off | Diagnosis output is already readable Markdown / 진단은 기본적으로 Markdown 출력 |
 | `--max-turns <number>` | `200` | Claude-only positive integer turn limit / Claude 전용 양의 정수 턴 제한 |
-| `--max-budget <number>` | `0.50` | Claude-only total budget in USD / Claude 전용 전체 분석 예산 |
+| `--max-budget <number>` | `2.00` | Claude-only total budget in USD / Claude 전용 전체 분석 예산 |
+| `--no-max-budget` | off | Run Claude without a budget cap / Claude 예산 상한 없이 실행 |
 | `--timeout <number>` | `120` | Positive total deadline in seconds / 전체 제한 시간(초) |
 | `--verbose` | off | Diagnostic progress / 상세 진행 정보 |
 

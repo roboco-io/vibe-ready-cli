@@ -94,7 +94,8 @@ npm test
 | `--pdf <file>` | - | Export report as PDF (requires pandoc + xelatex) |
 | `--no-cache` | - | Skip cache and force fresh analysis |
 | `--max-turns <n>` | `200` | Claude-only agent turn limit |
-| `--max-budget <n>` | `0.50` | Claude-only budget in USD |
+| `--max-budget <n>` | `2.00` | Claude-only budget in USD |
+| `--no-max-budget` | - | Run Claude without a budget cap |
 | `--timeout <n>` | `120` | Timeout in seconds |
 
 ## Architecture
@@ -209,13 +210,14 @@ Create a `.vibeready.json` in your repo root to customize evaluation:
 | `[path]` | `.` | Path to the repository to analyze |
 | `-v, --verbose` | - | Show detailed analysis results (rawFindings) |
 | `--max-turns <n>` | `200` | Claude-only maximum agent turns |
-| `--max-budget <n>` | `0.50` | Claude-only maximum cost (USD) |
+| `--max-budget <n>` | `2.00` | Claude-only maximum cost (USD) |
+| `--no-max-budget` | - | Run Claude without a budget cap |
 | `--timeout <n>` | `120` | Timeout (seconds) |
 
 ## Known Limitations
 
 - **LLM non-determinism**: Repeated analysis of the same repo may vary by ±5–10 points
-- **Estimated cost**: Approximately $0.10–0.50 per analysis run (varies by repo size)
+- **Estimated cost**: Varies with repo size; large repositories can exceed $0.50 per run. When the budget is exceeded, the error shows the spent cost and a suggested `--max-budget` value. With Claude Code subscription auth, this is an estimated API-price cost, not a separate charge
 - **Read-Only analysis**: The target repository is never modified
 - **MVP limitations**: Currently supports single repo + terminal output only. JSON/HTML output and batch analysis are planned for future versions
 
