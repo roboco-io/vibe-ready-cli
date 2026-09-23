@@ -12,8 +12,8 @@ describe("analyzer default constants", () => {
     expect(DEFAULT_MAX_TURNS).toBe(200);
   });
 
-  it("DEFAULT_MAX_BUDGET_USD should be 0.50", () => {
-    expect(DEFAULT_MAX_BUDGET_USD).toBe(0.50);
+  it("DEFAULT_MAX_BUDGET_USD should be 2.00", () => {
+    expect(DEFAULT_MAX_BUDGET_USD).toBe(2.00);
   });
 
   it("DEFAULT_TIMEOUT_MS should be 120000", () => {
@@ -22,6 +22,15 @@ describe("analyzer default constants", () => {
 });
 
 describe("scoring engine selection", () => {
+  it("runs Claude without a budget cap when the budget is unlimited", async () => {
+    let options: Record<string, unknown> | undefined;
+    const output = { categories: [{ name: "문서화 수준", tier: "nice", score: 80, recommendations: [], rawFindings: [] }], summary: "무제한" };
+    await analyzeRepository(process.cwd(), { engine: "claude", maxBudgetUsd: Number.POSITIVE_INFINITY, categories: ["문서화 수준"] }, {
+      claudeQuery: async function* (args) { options = args.options as Record<string, unknown>; yield { type: "result", subtype: "success", structured_output: output }; },
+    });
+    expect(options).toBeDefined();
+    expect(options?.maxBudgetUsd).toBeUndefined();
+  });
   it("uses Codex for scoring and retains a separate harness focus", async () => {
     let prompt = "";
     const output = { categories: [{ name: "문서화 수준", tier: "nice", score: 80, recommendations: [], rawFindings: [] }], summary: "Codex 분석" };

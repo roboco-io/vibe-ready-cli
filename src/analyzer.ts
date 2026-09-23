@@ -5,10 +5,10 @@ import type { GitLogContext } from "./git-log.js";
 import type { AgentId } from "./agents.js";
 import type { EngineDependencies, EngineId } from "./engines/types.js";
 import { runAnalysisEngine } from "./engines/run.js";
-import { assertEngineLimits, resolveEngine } from "./engines/selection.js";
+import { assertEngineLimits, DEFAULT_MAX_BUDGET_USD, resolveEngine } from "./engines/selection.js";
 
 export const DEFAULT_MAX_TURNS = 200;
-export const DEFAULT_MAX_BUDGET_USD = 0.50;
+export { DEFAULT_MAX_BUDGET_USD };
 export const DEFAULT_TIMEOUT_MS = 120_000;
 
 export interface AnalyzerOptions {
@@ -38,7 +38,7 @@ export async function analyzeRepository(repoPath: string, options: AnalyzerOptio
   const maxTurns = options.maxTurns ?? DEFAULT_MAX_TURNS;
   const maxBudgetUsd = options.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  if (!Number.isInteger(maxTurns) || maxTurns <= 0 || !Number.isFinite(maxBudgetUsd) || maxBudgetUsd <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("분석 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
+  if (!Number.isInteger(maxTurns) || maxTurns <= 0 || Number.isNaN(maxBudgetUsd) || maxBudgetUsd <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("분석 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
   const abortController = new AbortController();
   const timer = setTimeout(() => abortController.abort(), timeoutMs);
   try {

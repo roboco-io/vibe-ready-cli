@@ -44,7 +44,8 @@ program
   .option("-o, --output <file>", "Save report to file (auto-detects markdown from .md extension)")
   .option("--pdf <file>", "Export report as PDF (requires pandoc + xelatex)")
   .option("--max-turns <number>", "Claude-only maximum agent turns", "200")
-  .option("--max-budget <number>", "Claude-only maximum budget in USD", "0.50")
+  .option("--max-budget <number>", "Claude-only maximum budget in USD", "2.00")
+  .option("--no-max-budget", "Run Claude without a budget cap")
   .option("--timeout <number>", "Timeout in seconds", "120")
   .option("--diagnose", "Diagnose the development process using repository and remote evidence")
   .option("--provider <provider>", "Diagnosis provider: auto|github|gitlab|none", "auto")
@@ -100,7 +101,7 @@ program
     // 설정 파일 로드
     const config = loadConfig(repoPath);
     const engine = resolveEngine(opts.engine, config?.engine);
-    assertEngineLimits(engine, { maxBudget: program.getOptionValueSource("maxBudget") === "cli", maxTurns: program.getOptionValueSource("maxTurns") === "cli" });
+    assertEngineLimits(engine, { maxBudget: program.getOptionValueSource("maxBudget") === "cli" && opts.maxBudget !== false, maxTurns: program.getOptionValueSource("maxTurns") === "cli" });
     if (config && verbose) {
       process.stderr.write(`설정 파일 감지: ${config.categories.length}개 카테고리\n`);
     }
@@ -130,7 +131,7 @@ program
     const analyzerOpts = {
       engine,
       maxTurns: engine === "claude" ? Number(opts.maxTurns) : undefined,
-      maxBudgetUsd: engine === "claude" ? Number(opts.maxBudget) : undefined,
+      maxBudgetUsd: engine === "claude" ? (opts.maxBudget === false ? Number.POSITIVE_INFINITY : Number(opts.maxBudget)) : undefined,
       timeoutMs: Number(opts.timeout) * 1000,
       verbose,
       categories,

@@ -7,7 +7,7 @@ import { buildDiagnosisReport } from "./report.js";
 import { compareDiagnoses } from "./compare.js";
 import { redactValue } from "./redact.js";
 import { loadEngineConfig } from "../config.js";
-import { assertEngineLimits, parseEngine, resolveEngine } from "../engines/selection.js";
+import { assertEngineLimits, DEFAULT_MAX_BUDGET_USD, parseEngine, resolveEngine } from "../engines/selection.js";
 import type { EngineId } from "../engines/types.js";
 import type { DiagnosisOptions, DiagnosisSnapshot } from "./types.js";
 
@@ -94,13 +94,14 @@ export async function runDiagnosisCli(repoPath: string, opts: CliOptions): Promi
     provider: provider as DiagnosisOptions["provider"], profile: profile as DiagnosisOptions["profile"],
     days: numeric(opts, "days", 30, 3650), limit: numeric(opts, "limit", 30, 100),
     maxTurns: numeric(opts, "maxTurns", 200, Number.MAX_SAFE_INTEGER),
-    maxBudgetUsd: numeric(opts, "maxBudget", 0.5, Number.MAX_VALUE, false),
+    maxBudgetUsd: opts.maxBudget === false ? Number.POSITIVE_INFINITY : numeric(opts, "maxBudget", DEFAULT_MAX_BUDGET_USD, Number.MAX_VALUE, false),
     timeoutMs: numeric(opts, "timeout", 120, 2_147_483, false) * 1000,
     verbose: opts.verbose === true, goal: option(opts, "goal"), remoteUrl: option(opts, "remoteUrl"),
   };
   const selectEngine = (engine: EngineId) => {
     assertEngineLimits(engine, {
-      maxBudget: opts.maxBudgetExplicit === true || opts.maxBudgetExplicit !== false && opts.maxBudget !== undefined,
+      // --no-max-budget (false) is compatible with Codex, which has no dollar cap.
+      maxBudget: opts.maxBudget !== false && (opts.maxBudgetExplicit === true || opts.maxBudgetExplicit !== false && opts.maxBudget !== undefined),
       maxTurns: opts.maxTurnsExplicit === true || opts.maxTurnsExplicit !== false && opts.maxTurns !== undefined,
     });
     options.engine = engine;

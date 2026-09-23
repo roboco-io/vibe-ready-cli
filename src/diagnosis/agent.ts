@@ -1,7 +1,7 @@
 import type { HookCallback } from "@anthropic-ai/claude-agent-sdk";
 import type { ClaudeQuery, EngineRunner } from "../engines/types.js";
 import { runAnalysisEngine } from "../engines/run.js";
-import { assertEngineLimits, resolveEngine } from "../engines/selection.js";
+import { assertEngineLimits, DEFAULT_MAX_BUDGET_USD, resolveEngine } from "../engines/selection.js";
 import { execFileSync } from "node:child_process";
 import { readdirSync, realpathSync } from "node:fs";
 import { relative, resolve, isAbsolute, sep } from "node:path";
@@ -85,9 +85,9 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
   assertEngineLimits(engine, { maxBudget: options.maxBudgetUsd !== undefined, maxTurns: options.maxTurns !== undefined });
   if (!previous && Object.keys(options.answers ?? {}).length) throw new Error("파일 답변은 저장한 진단 스냅샷과 함께 재개해야 합니다");
   const days = previous?.window.days ?? options.days ?? 30; const limit = previous?.window.limit ?? options.limit ?? 30;
-  let turns = options.maxTurns ?? 200; let budget = options.maxBudgetUsd ?? 0.5;
+  let turns = options.maxTurns ?? 200; let budget = options.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD;
   const timeoutMs = options.timeoutMs ?? 120_000;
-  if (!Number.isInteger(days) || days < 1 || days > 3650 || !Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(turns) || turns <= 0 || !Number.isFinite(budget) || budget <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("진단 기간, 표본 수, 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
+  if (!Number.isInteger(days) || days < 1 || days > 3650 || !Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(turns) || turns <= 0 || Number.isNaN(budget) || budget <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("진단 기간, 표본 수, 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
   const profile = previous?.profile ?? (options.profile && options.profile !== "auto" ? options.profile : detectProfile(root));
   if (!PROFILES.includes(profile)) throw new Error("지원하지 않는 저장소 유형입니다");
   const goal = previous?.goal ?? (options.goal?.trim() || "AI 개발 도입 준비와 개선 전후 확인");

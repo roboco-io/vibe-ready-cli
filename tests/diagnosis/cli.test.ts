@@ -57,6 +57,15 @@ describe("diagnosis CLI", () => {
     await runDiagnosisCli(repo, { engine: "codex", maxBudget: "0.50", maxTurns: "200", maxBudgetExplicit: false, maxTurnsExplicit: false });
     expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]).toMatchObject({ engine: "codex", maxTurns: undefined, maxBudgetUsd: undefined });
   });
+  it("maps --no-max-budget to an unlimited Claude budget and allows it with Codex", async () => {
+    const { diagnoseRepository } = await import("../../src/diagnosis/agent.js");
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, { maxBudget: false, maxBudgetExplicit: true });
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]?.maxBudgetUsd).toBe(Number.POSITIVE_INFINITY);
+    vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());
+    await runDiagnosisCli(repo, { engine: "codex", maxBudget: false, maxBudgetExplicit: true });
+    expect(vi.mocked(diagnoseRepository).mock.calls.at(-1)?.[1]).toMatchObject({ engine: "codex", maxBudgetUsd: undefined });
+  });
   it("uses configured engine or Claude by default", async () => {
     const { diagnoseRepository } = await import("../../src/diagnosis/agent.js");
     vi.mocked(diagnoseRepository).mockResolvedValueOnce(fixture());

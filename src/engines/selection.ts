@@ -1,5 +1,8 @@
 import type { EngineId } from "./types.js";
 
+/** Default Claude budget in USD; --no-max-budget replaces it with Infinity (no cap). */
+export const DEFAULT_MAX_BUDGET_USD = 2.00;
+
 export function parseEngine(value: unknown): EngineId {
   if (value !== "claude" && value !== "codex") throw new Error("분석 엔진은 claude 또는 codex여야 합니다");
   return value;

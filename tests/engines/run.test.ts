@@ -43,6 +43,14 @@ describe("common analysis runner", () => {
     const claudeQuery: ClaudeQuery = async function* () { yield { type: "result", subtype: "error_max_budget_usd", structured_output: { answer: "partial" } }; };
     await expect(runAnalysisEngine("claude", request(), { claudeQuery })).rejects.toThrow(/예산/);
   });
+  it("reports spent cost and a retry budget when the Claude budget is exceeded", async () => {
+    const claudeQuery: ClaudeQuery = async function* () { yield { type: "result", subtype: "error_max_budget_usd", total_cost_usd: 0.5312, num_turns: 37 }; };
+    await expect(runAnalysisEngine("claude", request(), { claudeQuery })).rejects.toThrow("분석 예산을 초과했습니다 (사용: $0.53 / 한도: $0.50, 37턴). --max-budget 1.50 이상으로 다시 실행해 보세요.");
+  });
+  it("falls back to the limit when the SDK omits spent cost", async () => {
+    const claudeQuery: ClaudeQuery = async function* () { yield { type: "result", subtype: "error_max_budget_usd" }; };
+    await expect(runAnalysisEngine("claude", request(), { claudeQuery })).rejects.toThrow("분석 예산을 초과했습니다 (한도: $0.50). --max-budget 1.00 이상으로 다시 실행해 보세요.");
+  });
   it("honors an already cancelled invocation before either engine runs", async () => {
     const input = request(); input.abortController.abort();
     await expect(runAnalysisEngine("codex", input, { codexRun: async () => { throw new Error("should not run"); } })).rejects.toHaveProperty("name", "AbortError");
