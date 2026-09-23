@@ -9,6 +9,9 @@ export interface EngineRequest {
   abortController: AbortController;
   maxTurns?: number;
   maxBudgetUsd?: number;
+  /** Multi-pass callers: the user's whole budget and cost already spent, so budget errors describe the whole run. */
+  budgetTotalUsd?: number;
+  budgetSpentUsd?: number;
   verbose?: boolean;
   claudeHooks?: NonNullable<Parameters<typeof query>[0]["options"]>["hooks"];
 }

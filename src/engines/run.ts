@@ -47,7 +47,10 @@ export async function runAnalysisEngine(engine: EngineId, request: EngineRequest
     if (message.type !== "result") continue;
     if (message.subtype !== "success") {
       if (message.subtype === "error_max_turns") throw new Error("분석이 최대 턴 수에 도달했습니다. --max-turns를 늘려보세요.");
-      if (message.subtype === "error_max_budget_usd") throw new Error(budgetExceededMessage(finiteCost(message.total_cost_usd), request.maxBudgetUsd, message.num_turns));
+      if (message.subtype === "error_max_budget_usd") {
+        const cost = finiteCost(message.total_cost_usd);
+        throw new Error(budgetExceededMessage(cost === undefined ? undefined : (request.budgetSpentUsd ?? 0) + cost, request.budgetTotalUsd ?? request.maxBudgetUsd, message.num_turns));
+      }
       throw new Error("Claude 분석이 정상 완료되지 않았습니다");
     }
     const output = message.structured_output ?? (typeof message.result === "string" ? parseEngineJson(message.result) : undefined);

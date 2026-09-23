@@ -85,7 +85,7 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
   assertEngineLimits(engine, { maxBudget: options.maxBudgetUsd !== undefined, maxTurns: options.maxTurns !== undefined });
   if (!previous && Object.keys(options.answers ?? {}).length) throw new Error("파일 답변은 저장한 진단 스냅샷과 함께 재개해야 합니다");
   const days = previous?.window.days ?? options.days ?? 30; const limit = previous?.window.limit ?? options.limit ?? 30;
-  let turns = options.maxTurns ?? 200; let budget = options.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD;
+  let turns = options.maxTurns ?? 200; let budget = options.maxBudgetUsd ?? DEFAULT_MAX_BUDGET_USD; const totalBudget = budget;
   const timeoutMs = options.timeoutMs ?? 120_000;
   if (!Number.isInteger(days) || days < 1 || days > 3650 || !Number.isInteger(limit) || limit < 1 || limit > 100 || !Number.isInteger(turns) || turns <= 0 || Number.isNaN(budget) || budget <= 0 || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2_147_483_647) throw new Error("진단 기간, 표본 수, 턴 수, 예산, 타임아웃은 유효한 양수여야 합니다");
   const profile = previous?.profile ?? (options.profile && options.profile !== "auto" ? options.profile : detectProfile(root));
@@ -110,11 +110,14 @@ export async function diagnoseRepository(repoPath: string, options: DiagnosisOpt
         claudeHooks: { PreToolUse: [{ hooks: [restrictTools(root)] }] },
         maxTurns: engine === "claude" ? turns : undefined,
         maxBudgetUsd: engine === "claude" ? budget : undefined,
+        budgetTotalUsd: engine === "claude" ? totalBudget : undefined,
+        budgetSpentUsd: engine === "claude" && Number.isFinite(totalBudget) ? totalBudget - budget : undefined,
       }, { claudeQuery: dependencies.query, codexRun: dependencies.codexRun });
       checkAbort();
       const output = validateDiagnosisOutput(result.output, evidence, profile, root);
       if (engine === "claude") {
-        budget = result.costUsd === undefined ? 0 : Math.max(0, budget - result.costUsd);
+        // Unknown cost exhausts a finite budget, but --no-max-budget (Infinity) stays unlimited.
+        budget = budget === Number.POSITIVE_INFINITY ? budget : result.costUsd === undefined ? 0 : Math.max(0, budget - result.costUsd);
         turns = result.turns === undefined ? 0 : Math.max(0, turns - result.turns);
       }
       return output;

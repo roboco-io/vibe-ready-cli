@@ -94,6 +94,26 @@ describe("diagnosis investigation", () => {
       expect(snapshot.evidence.find(e => e.id === "interview:q1")?.summary).toContain("PR마다");
     });
   });
+  it("reports the user's total budget when a later pass exceeds the remaining budget", async () => {
+    await withRepo(async root => {
+      let calls = 0;
+      const query: QueryRunner = async function* () {
+        calls++;
+        if (calls === 1) yield { type: "result", subtype: "success", structured_output: result(), total_cost_usd: 1.85, num_turns: 1 };
+        else yield { type: "result", subtype: "error_max_budget_usd", total_cost_usd: 0.16, num_turns: 3 };
+      };
+      const snapshot = await diagnoseRepository(root, { maxBudgetUsd: 2, interview: async () => ({ q1: "답변" }) }, { query, collect: async () => remote });
+      expect(snapshot.remote.gaps.join(" ")).toContain("사용: $2.01 / 한도: $2.00, 3턴). --max-budget 4.50 이상");
+    });
+  });
+  it("keeps an unlimited budget when the SDK omits cost", async () => {
+    await withRepo(async root => {
+      const budgets: (number | undefined)[] = [];
+      const query: QueryRunner = async function* (args) { budgets.push(args.options?.maxBudgetUsd); yield { type: "result", subtype: "success", structured_output: result(), num_turns: 1 }; };
+      await diagnoseRepository(root, { maxBudgetUsd: Number.POSITIVE_INFINITY, interview: async () => ({ q1: "답변" }) }, { query, collect: async () => remote });
+      expect(budgets).toEqual([undefined, undefined]);
+    });
+  });
   it("does not start another paid query after budget exhaustion", async () => {
     await withRepo(async root => {
       let calls = 0;
